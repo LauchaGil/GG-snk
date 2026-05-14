@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GG'SNK — Retro Runners Importados</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,900;1,600;1,700;1,900&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { bg:'#080502', orange:'#FF6600', card:'#120b05', border:'#2a1a08' },
+          fontFamily: { mono:['DM Mono','monospace'], condensed:['Barlow Condensed','sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <style>
+    *{box-sizing:border-box}
+    body{background:#080502;color:white;font-family:'DM Mono',monospace;overflow-x:hidden}
+    ::-webkit-scrollbar{width:4px}
+    ::-webkit-scrollbar-track{background:#080502}
+    ::-webkit-scrollbar-thumb{background:#FF6600;border-radius:2px}
+
+    @keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+    .ticker-inner{animation:ticker 28s linear infinite;white-space:nowrap;display:inline-flex}
+    .ticker-inner:hover{animation-play-state:paused}
+
+    @keyframes toastIn{from{opacity:0;transform:translateY(-12px) translateX(-50%)}to{opacity:1;transform:translateY(0) translateX(-50%)}}
+    .toast{animation:toastIn .3s ease both}
+
+    .img-zoom{transition:transform 0.6s ease,filter 0.6s ease;filter:grayscale(20%)}
+    .img-zoom:hover{transform:scale(1.06);filter:grayscale(0%)}
+
+    .btn-primary{background:#FF6600;color:#080502;font-weight:900;font-family:'Barlow Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase;font-style:italic;transition:all .2s;border:2px solid #FF6600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+    .btn-primary:hover{background:white;color:#080502;border-color:white;transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,102,0,.3)}
+
+    .btn-secondary{background:transparent;color:#FF6600;font-weight:900;font-family:'Barlow Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase;font-style:italic;transition:all .2s;border:2px solid #FF6600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+    .btn-secondary:hover{background:#FF6600;color:#080502;transform:translateY(-2px)}
+
+    .cart-sidebar{transform:translateX(100%);transition:transform .4s cubic-bezier(.16,1,.3,1)}
+    .cart-sidebar.open{transform:translateX(0)}
+    .overlay{opacity:0;pointer-events:none;transition:opacity .3s ease}
+    .overlay.show{opacity:1;pointer-events:all}
+
+    .section-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;text-transform:uppercase}
+    .encargo-badge{background:#FF6600;color:#080502;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:.08em;font-size:10px;padding:2px 8px}
+
+    input,textarea{background:#120b05;border:1px solid #2a1a08;color:white;font-family:'DM Mono',monospace;outline:none;transition:border-color .2s}
+    input:focus,textarea:focus{border-color:#FF6600}
+
+    @keyframes glitch{0%,89%,100%{text-shadow:none}90%{text-shadow:3px 0 #FF6600,-3px 0 #00ffff}92%{text-shadow:-3px 0 #FF6600,3px 0 #00ffff}94%{text-shadow:none}}
+    .logo-glitch{animation:glitch 6s infinite}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:translateY(0)}}
+    .fade-up{animation:fadeUp .8s ease both}
+    .fade-up-2{animation:fadeUp .8s .15s ease both}
+    .fade-up-3{animation:fadeUp .8s .3s ease both}
+
+    .hero-line{overflow:hidden}
+    .lifestyle-grid img{transition:transform .6s ease,filter .6s ease;filter:grayscale(30%)}
+    .lifestyle-grid img:hover{transform:scale(1.04);filter:grayscale(0%)}
+
+    .noise{position:relative}
+    .noise::before{content:'';position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:1;opacity:.5}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef } = React;
+
+const CAT  = 'img catalogo/';
+const LIFE = 'img lifestyle/';
+
+const MODELS = [
+  {
+    id: 'nike-p6000',
+    brand: 'NIKE',
+    model: 'P-6000',
+    lifestyleImg: LIFE + 'Nike P-6000 White 2.jpg',
+    variants: [
+      { id:101, color:'White',         price:115, img:CAT+'P-6000/P-6000 white.jpeg',         sizes:[38,39,40,41,42,43,44] },
+      { id:102, color:'Brown',         price:115, img:CAT+'P-6000/P-6000 brown.jpeg',         sizes:[38,39,40,41,42,43,44] },
+      { id:103, color:'White & Brown', price:115, img:CAT+'P-6000/P-6000 white & brown.jpeg', sizes:[38,39,40,41,42,43,44] },
+      { id:104, color:'Grey',          price:115, img:CAT+'P-6000/P-6000 GREY.jpeg',          sizes:[38,39,40,41,42,43,44] },
+      { id:105, color:'Grey & Black',  price:115, img:CAT+'P-6000/P-6000 grey & black.jpeg',  sizes:[38,39,40,41,42,43,44] },
+      { id:106, color:'Black',         price:115, img:CAT+'P-6000/P-6000 black.jpg',          sizes:[38,39,40,41,42,43,44] },
+      { id:107, color:'Plateadas',     price:115, img:CAT+'P-6000/P-6000 plateadas.jpeg',     sizes:[38,39,40,41,42,43,44] },
+      { id:108, color:'Red & White',   price:115, img:CAT+'P-6000/P-6000 red & white.jpeg',   sizes:[38,39,40,41,42,43,44] },
+    ]
+  },
+  {
+    id: 'nb-740',
+    brand: 'NEW BALANCE',
+    model: '740',
+    lifestyleImg: LIFE + 'New Balance 740 modelo.jpg',
+    variants: [
+      { id:201, color:'Grey',          price:120, img:CAT+'NB-740/NB-740 Grey.jpg',     sizes:[38,39,40,41,42,43,44] },
+      { id:202, color:'Metallic Mesh', price:120, img:CAT+'NB-740/NB-740 Metallic.jpg', sizes:[38,39,40,41,42,43,44] },
+    ]
+  },
+  {
+    id: 'nb-1906',
+    brand: 'NEW BALANCE',
+    model: '1906',
+    lifestyleImg: LIFE + 'New Balance negras piedras.jpg',
+    variants: [
+      { id:301, color:'Grey Technical', price:130, img:CAT+'NB-1906/NB-1906 Grey.jpg', sizes:[39,40,41,42,43,44,45] },
+    ]
+  },
+  {
+    id: 'asics-gel',
+    brand: 'ASICS',
+    model: 'GEL-KAYANO 14',
+    lifestyleImg: LIFE + 'Asics GEL-Kayano 14.jpg',
+    variants: [
+      { id:401, color:'Classic White',  price:120, img:CAT+'ASICS-GEL/ASICS GEL Classic White.jpg', sizes:[37,38,39,40,41,42,43] },
+      { id:402, color:'Cream & Silver', price:135, img:CAT+'ASICS-GEL/ASICS GEL Cream Silver.jpg',  sizes:[37,38,39,40,41,42,43] },
+    ]
+  },
+  {
+    id: 'adidas-response',
+    brand: 'ADIDAS',
+    model: 'RESPONSE CL',
+    lifestyleImg: CAT + 'Adidas-Response/Response CL Bad Bunny Western.jpg',
+    variants: [
+      { id:501, color:'Bad Bunny · Black', price:145, img:CAT+'Adidas-Response/Response CL Bad Bunny Black.jpg', sizes:[38,39,40,41,42,43,44] },
+    ]
+  },
+];
+
+const LIFESTYLE_IMGS = [
+  { src: LIFE+'Asics GEL-Kayano 14.jpg',     pos: 'center center' },
+  { src: LIFE+'New Balance 740 modelo.jpg',  pos: 'center center' },
+  { src: LIFE+'Nike P-6000 manos.jpg',       pos: 'center center' },
+  { src: LIFE+'New Balance negras piedras.jpg', pos: 'center center' },
+];
+
+/* ── TOAST ── */
+function Toast({ message, onDone }) {
+  useEffect(() => { const t = setTimeout(onDone, 2200); return () => clearTimeout(t); }, []);
+  return (
+    <div className="toast fixed top-5 left-1/2 z-[200] bg-orange text-bg px-6 py-3 text-sm font-bold font-condensed uppercase tracking-widest shadow-2xl"
+         style={{transform:'translateX(-50%)'}}>
+      + {message} agregado al pedido
+    </div>
+  );
+}
+
+/* ── NAVBAR ── */
+function Navbar({ cartCount, onCartOpen }) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const fn = () => setScrolled(window.scrollY > 60);
+    window.addEventListener('scroll', fn);
+    return () => window.removeEventListener('scroll', fn);
+  }, []);
+  return (
+    <nav className={`sticky top-0 z-50 border-b border-border transition-all duration-300 ${scrolled ? 'bg-bg/95 backdrop-blur-md' : 'bg-transparent'}`}>
+      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-6">
+        <a href="#inicio" className="logo-glitch font-condensed font-black italic text-orange text-4xl leading-none tracking-tight" style={{textDecoration:'none'}}>
+          GG&apos;SNK
+        </a>
+        <div className="hidden md:flex items-center gap-8">
+          <a href="#inicio"    className="font-mono text-[11px] uppercase tracking-[.25em] text-gray-400 hover:text-orange transition-colors" style={{textDecoration:'none'}}>Inicio</a>
+          <a href="#modelos"   className="font-mono text-[11px] uppercase tracking-[.25em] text-gray-400 hover:text-orange transition-colors" style={{textDecoration:'none'}}>Modelos</a>
+          <a href="#catalogo"  className="font-mono text-[11px] uppercase tracking-[.25em] text-gray-400 hover:text-orange transition-colors" style={{textDecoration:'none'}}>Catálogo</a>
+          <a href="#como-funciona" className="font-mono text-[11px] uppercase tracking-[.25em] text-gray-400 hover:text-orange transition-colors" style={{textDecoration:'none'}}>Cómo Funciona</a>
+        </div>
+        <button onClick={onCartOpen} className="btn-secondary relative flex items-center gap-2 px-5 py-2 text-sm flex-shrink-0">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 01-8 0"/>
+          </svg>
+          MI PEDIDO
+          {cartCount > 0 && (
+            <span className="absolute -top-2 -right-2 bg-orange text-bg text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center leading-none">
+              {cartCount}
+            </span>
+          )}
+        </button>
+      </div>
+    </nav>
+  );
+}
+
+/* ── TICKER ── */
+function Ticker() {
+  const items = ['PEDIDOS POR ENCARGO','VESTITE COMODO','USA RETRO RUNNERS','IMPORTADAS','ASICS · NIKE · ADIDAS · NEW BALANCE','TALLES 37 AL 45',"GG'SNK",'CITY BELL, ARG'];
+  const text = items.join('  ///  ') + '  ///  ';
+  return (
+    <div className="bg-orange overflow-hidden py-2 select-none">
+      <div className="ticker-inner">
+        <span className="font-condensed font-black italic text-bg text-sm tracking-widest uppercase px-6">
+          {text + text + text}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ── HERO ── */
+function Hero() {
+  return (
+    <section id="inicio" className="relative min-h-screen flex flex-col justify-center overflow-hidden noise">
+      {/* BG grid */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        backgroundImage:'repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(255,102,0,0.04) 59px,rgba(255,102,0,0.04) 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,rgba(255,102,0,0.04) 59px,rgba(255,102,0,0.04) 60px)'
+      }}/>
+      {/* Background image oscura */}
+      <img
+        src="img lifestyle/Nike P-6000 White 2.jpg"
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+        style={{opacity:0.25, filter:'grayscale(20%) blur(1px)', objectPosition:'center center'}}
+        alt=""
+      />
+      {/* Overlay gradiente para que se funda con el fondo */}
+      <div className="absolute inset-0 pointer-events-none" style={{background:'linear-gradient(to right, rgba(8,5,2,0.85) 40%, rgba(8,5,2,0.4) 100%)'}}/>
+      {/* Orange glow */}
+      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full pointer-events-none"
+           style={{background:'radial-gradient(circle, rgba(255,102,0,0.1) 0%, transparent 70%)'}}/>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-32 w-full">
+        <p className="fade-up font-mono text-[11px] uppercase tracking-[.45em] text-orange mb-6">
+          // Retro Runners Importados · City Bell, ARG
+        </p>
+
+        <div className="hero-line fade-up">
+          <h1 className="section-title leading-none" style={{fontSize:'clamp(64px, 12vw, 160px)', lineHeight:0.88}}>
+            RETRO<br/>
+            <span style={{color:'#FF6600'}}>RUNNER</span><br/>
+            STORE.
+          </h1>
+        </div>
+
+        <p className="fade-up-2 section-title mt-6" style={{fontSize:'clamp(20px, 2.5vw, 32px)', color:'#FF6600', letterSpacing:'.04em'}}>
+          Vestite cómodo, vestite con estilo.
+        </p>
+
+        <p className="fade-up-3 font-mono text-gray-500 text-sm leading-loose mt-4 max-w-lg">
+          Zapatillas retro runner de los 90s y 2000s. Nike, New Balance, ASICS, Adidas — importadas especialmente para vos.
+        </p>
+
+        <div className="fade-up-3 flex flex-wrap gap-4 mt-10">
+          <a href="#catalogo" className="btn-primary px-10 py-4 text-xl">Ver Catálogo</a>
+          <a href="#como-funciona" className="btn-secondary px-10 py-4 text-xl">Cómo Funciona</a>
+        </div>
+
+        {/* Stats row */}
+        <div className="mt-20 grid grid-cols-3 gap-0 max-w-lg border border-border">
+          {[['8+','Modelos'],['37→45','Talles'],['48hs','Respuesta']].map(([n,l]) => (
+            <div key={l} className="border-r border-border last:border-0 px-6 py-4 text-center">
+              <p className="font-condensed font-black italic text-3xl text-orange">{n}</p>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-gray-600 mt-1">{l}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Big BG text */}
+      <div className="absolute bottom-0 right-0 pointer-events-none select-none overflow-hidden">
+        <p className="font-condensed font-black italic text-right leading-none"
+           style={{fontSize:'22vw', color:'rgba(255,102,0,0.04)', letterSpacing:'-0.04em'}}>
+          RUN
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/* ── LIFESTYLE GRID ── */
+function LifestyleSection() {
+  return (
+    <section id="modelos" className="py-20 max-w-7xl mx-auto px-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+        <div>
+          <p className="font-mono text-orange text-xs tracking-[.45em] uppercase mb-3">// Lifestyle</p>
+          <h2 className="section-title text-5xl md:text-7xl border-l-8 border-orange pl-6 leading-none">
+            BUILT_<br/>FOR THE<br/>STREETS
+          </h2>
+        </div>
+        <p className="font-mono text-gray-600 text-xs max-w-xs leading-loose">
+          Diseños que resistieron el paso del tiempo. Suelas que saben lo que es el asfalto.
+        </p>
+      </div>
+
+      {/* Grid 2x2 limpio — todas object-cover, sin bordes negros */}
+      <div className="lifestyle-grid" style={{display:'grid', gridTemplateColumns:'1fr 1fr', gridTemplateRows:'520px 520px', gap:'4px'}}>
+
+        {/* 1 — Asics GEL, portrait: se centra en el sujeto */}
+        <div style={{overflow:'hidden', position:'relative'}} className="bg-card">
+          <img src={LIFESTYLE_IMGS[0].src} alt="lifestyle" className="img-zoom"
+               style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 30%', display:'block'}}/>
+        </div>
+
+        {/* 2 — NB 740 modelo, teal bg: centrado */}
+        <div style={{overflow:'hidden', position:'relative'}} className="bg-card">
+          <img src={LIFESTYLE_IMGS[1].src} alt="lifestyle" className="img-zoom"
+               style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:'center center', display:'block'}}/>
+        </div>
+
+        {/* 3 — Nike P-6000 manos: centrado en la zapatilla */}
+        <div style={{overflow:'hidden', position:'relative'}} className="bg-card">
+          <img src={LIFESTYLE_IMGS[2].src} alt="lifestyle" className="img-zoom"
+               style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', display:'block'}}/>
+        </div>
+
+        {/* 4 — NB negras piedras: cuadrada, encaja perfecto */}
+        <div style={{overflow:'hidden', position:'relative'}} className="bg-card">
+          <img src={LIFESTYLE_IMGS[3].src} alt="lifestyle" className="img-zoom"
+               style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:'center center', display:'block'}}/>
+        </div>
+
+      </div>
+    </section>
+  );
+}
+
+/* ── MODEL CARD ── */
+function ModelCard({ model, onClick }) {
+  return (
+    <div
+      onClick={() => onClick(model)}
+      className="bg-card border border-border overflow-hidden cursor-pointer group hover:border-orange/50 transition-all duration-300"
+      style={{position:'relative'}}
+    >
+      <div className="relative overflow-hidden" style={{aspectRatio:'3/4'}}>
+        <img
+          src={model.lifestyleImg}
+          alt={`${model.brand} ${model.model}`}
+          className="w-full h-full object-cover img-zoom"
+          onError={e => { e.target.src=`https://via.placeholder.com/400x533/120b05/FF6600?text=${model.brand}`; }}
+        />
+        {/* Gradient overlay bottom */}
+        <div className="absolute inset-0 pointer-events-none" style={{background:'linear-gradient(to top, rgba(8,5,2,0.92) 0%, rgba(8,5,2,0.2) 45%, transparent 100%)'}}/>
+        {/* Brand badge top-left */}
+        <div className="absolute top-3 left-3 bg-bg/80 backdrop-blur-sm px-3 py-1">
+          <span className="font-mono text-[10px] text-orange uppercase tracking-[.3em]">{model.brand}</span>
+        </div>
+        {/* Encargo badge top-right */}
+        <div className="absolute top-3 right-3">
+          <span className="encargo-badge">Por encargo</span>
+        </div>
+        {/* Color count badge */}
+        <div className="absolute bottom-16 left-4">
+          <span className="font-mono text-[10px] text-gray-400 uppercase tracking-widest">
+            {model.variants.length} {model.variants.length === 1 ? 'color' : 'colores'}
+          </span>
+        </div>
+        {/* Model name bottom */}
+        <div className="absolute bottom-0 left-0 right-0 p-4">
+          <h4 className="font-condensed font-black italic uppercase text-3xl leading-none text-white">{model.model}</h4>
+          <p className="font-mono text-[10px] text-gray-400 mt-1 uppercase tracking-widest">
+            desde ${Math.min(...model.variants.map(v => v.price))} USD
+          </p>
+        </div>
+        {/* Hover overlay */}
+        <div className="absolute inset-0 bg-orange/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none flex items-center justify-center">
+          <span className="font-condensed font-black italic text-white text-xl uppercase tracking-widest bg-orange px-6 py-3">
+            Ver Colores →
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── MODEL MODAL ── */
+function ModelModal({ model, onClose, onAdd }) {
+  const [activeVariant, setActiveVariant] = useState(model.variants[0]);
+  const [selectedSize,  setSelectedSize]  = useState(null);
+  const [sizeError,     setSizeError]     = useState(false);
+  const [added,         setAdded]         = useState(false);
+
+  // Close on ESC
+  useEffect(() => {
+    const fn = e => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', fn);
+    return () => window.removeEventListener('keydown', fn);
+  }, [onClose]);
+
+  const handleVariantChange = (v) => {
+    setActiveVariant(v);
+    setSelectedSize(null);
+    setSizeError(false);
+    setAdded(false);
+  };
+
+  const handleAdd = () => {
+    if (!selectedSize) { setSizeError(true); setTimeout(() => setSizeError(false), 1800); return; }
+    onAdd({ ...activeVariant, brand: model.brand, model: model.model }, selectedSize);
+    setAdded(true);
+    setTimeout(() => { setAdded(false); setSelectedSize(null); }, 1600);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4" style={{backdropFilter:'blur(6px)'}}>
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-bg/90" onClick={onClose}/>
+
+      {/* Modal box */}
+      <div className="relative bg-card border border-border w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col md:flex-row">
+
+        {/* Close */}
+        <button onClick={onClose} className="absolute top-4 right-4 z-10 text-gray-500 hover:text-orange transition-colors p-1">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+
+        {/* LEFT — product image */}
+        <div className="relative flex-shrink-0 bg-card overflow-hidden flex items-center justify-center" style={{width:'100%', maxWidth:'420px', minHeight:'320px', flex:'1'}}>
+          <img
+            key={activeVariant.id}
+            src={activeVariant.img}
+            alt={`${model.model} ${activeVariant.color}`}
+            className="w-full h-full"
+            style={{objectFit:'contain', objectPosition:'center', minHeight:'320px', maxHeight:'560px', transition:'opacity .3s', padding:'16px'}}
+            onError={e => { e.target.src=`https://via.placeholder.com/420x560/120b05/FF6600?text=${model.model}`; }}
+          />
+          <div className="absolute top-4 left-4 bg-bg/80 backdrop-blur-sm px-3 py-1">
+            <span className="font-mono text-[10px] text-orange uppercase tracking-[.3em]">{model.brand}</span>
+          </div>
+        </div>
+
+        {/* RIGHT — info + selector */}
+        <div className="flex flex-col p-6 md:p-8 overflow-y-auto" style={{flex:'1', minWidth:0}}>
+          {/* Header */}
+          <div className="mb-6">
+            <h3 className="font-condensed font-black italic uppercase leading-none" style={{fontSize:'clamp(36px,5vw,52px)'}}>{model.model}</h3>
+            <p className="font-mono text-orange text-xs uppercase tracking-[.3em] mt-1">{activeVariant.color}</p>
+          </div>
+
+          {/* Color selector */}
+          <div className="mb-6">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-gray-600 mb-3">Color</p>
+            <div className="flex flex-wrap gap-2">
+              {model.variants.map(v => (
+                <button
+                  key={v.id}
+                  onClick={() => handleVariantChange(v)}
+                  className={`relative overflow-hidden border-2 transition-all duration-200 ${
+                    activeVariant.id === v.id ? 'border-orange' : 'border-border hover:border-gray-500'
+                  }`}
+                  style={{width:'64px', height:'64px'}}
+                  title={v.color}
+                >
+                  <img
+                    src={v.img}
+                    alt={v.color}
+                    className="w-full h-full object-cover"
+                    onError={e => { e.target.parentElement.style.background='#120b05'; }}
+                  />
+                  {activeVariant.id === v.id && (
+                    <div className="absolute inset-0 border-2 border-orange pointer-events-none"/>
+                  )}
+                </button>
+              ))}
+            </div>
+            <p className="font-mono text-[10px] text-gray-600 mt-2 italic">{activeVariant.color}</p>
+          </div>
+
+          {/* Size selector */}
+          <div className="mb-6">
+            <p className={`font-mono text-[10px] uppercase tracking-widest mb-3 transition-colors ${sizeError ? 'text-red-400 font-bold' : 'text-gray-600'}`}>
+              {sizeError ? '⚠ Seleccioná un talle' : 'Talle EUR'}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {activeVariant.sizes.map(s => (
+                <button key={s} onClick={() => setSelectedSize(s)}
+                  className={`px-3 py-2 text-xs border font-mono transition-all ${
+                    selectedSize === s
+                      ? 'border-orange bg-orange text-bg font-bold'
+                      : 'border-border text-gray-500 hover:border-orange/60 hover:text-white'
+                  }`}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Price + CTA */}
+          <div className="mt-auto border-t border-border pt-6">
+            <div className="flex items-baseline gap-2 mb-4">
+              <span className="font-condensed font-black italic text-4xl">${activeVariant.price}</span>
+              <span className="font-mono text-gray-500 text-sm">USD</span>
+              <span className="font-mono text-gray-600 text-xs ml-2">· precio encargo</span>
+            </div>
+            <p className="font-mono text-[10px] text-gray-600 mb-4">Precio en ARS se cotiza al confirmar el pedido.</p>
+            <button onClick={handleAdd}
+              className={`w-full py-4 text-xl transition-all ${added
+                ? 'bg-green-600 text-white border-2 border-green-600 font-condensed font-black uppercase italic cursor-pointer'
+                : 'btn-primary'}`}>
+              {added ? '✓ AGREGADO AL PEDIDO' : '+ AGREGAR AL PEDIDO'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── CATALOG ── */
+function Catalog({ onAdd }) {
+  const [filter,       setFilter]       = useState('TODOS');
+  const [activeModel,  setActiveModel]  = useState(null);
+
+  const brands   = ['TODOS', ...Array.from(new Set(MODELS.map(m => m.brand)))];
+  const filtered = filter === 'TODOS' ? MODELS : MODELS.filter(m => m.brand === filter);
+
+  return (
+    <section id="catalogo" className="py-20 max-w-7xl mx-auto px-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+        <div>
+          <p className="font-mono text-orange text-xs tracking-[.45em] uppercase mb-3">// Catálogo completo</p>
+          <h2 className="section-title text-6xl md:text-8xl border-l-8 border-orange pl-6 leading-none">
+            PEDIDOS_<br/>POR_ENCARGO
+          </h2>
+          <p className="font-mono text-gray-500 text-xs mt-4 max-w-md leading-relaxed">
+            Clickeá un modelo para ver todos los colores y talles disponibles.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {brands.map(b => (
+            <button key={b} onClick={() => setFilter(b)}
+              className={`font-mono text-xs uppercase tracking-widest px-4 py-2 border transition-all ${
+                filter === b
+                  ? 'bg-orange text-bg border-orange font-bold'
+                  : 'border-border text-gray-500 hover:border-orange/50 hover:text-white'
+              }`}>
+              {b}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {filtered.map(m => <ModelCard key={m.id} model={m} onClick={setActiveModel}/>)}
+      </div>
+
+      <div className="mt-10 border border-orange/30 p-6 flex flex-col md:flex-row items-center gap-4">
+        <div className="text-orange text-3xl">🔍</div>
+        <div>
+          <p className="font-condensed font-black italic text-xl">¿No encontrás lo que buscás?</p>
+          <p className="font-mono text-gray-400 text-xs mt-1">Escribinos — conseguimos cualquier modelo retro runner importado.</p>
+        </div>
+        <a href="https://wa.me/5491100000000" target="_blank" rel="noopener noreferrer"
+           className="btn-secondary px-6 py-2 text-sm flex-shrink-0">Consultar por WA</a>
+      </div>
+
+      {activeModel && (
+        <ModelModal
+          model={activeModel}
+          onClose={() => setActiveModel(null)}
+          onAdd={(product, size) => { onAdd(product, size); }}
+        />
+      )}
+    </section>
+  );
+}
+
+/* ── COMO FUNCIONA ── */
+function ComoFunciona() {
+  const steps = [
+    { n:'01', title:'Elegís el modelo',   desc:'Buscá en el catálogo, seleccioná el modelo y el talle que querés.' },
+    { n:'02', title:'Nos contactamos',    desc:'Te escribimos por WhatsApp para confirmar precio en ARS y disponibilidad.' },
+    { n:'03', title:'Coordinamos el pago',desc:'Aceptamos transferencia, MercadoPago o efectivo según lo que prefieran.' },
+    { n:'04', title:'Llega a tu puerta',  desc:'Importamos el par especialmente para vos. Envío a todo el país en 15–20 días.' },
+  ];
+  return (
+    <section id="como-funciona" className="py-20 border-t border-border">
+      <div className="max-w-7xl mx-auto px-6">
+        <p className="font-mono text-orange text-xs tracking-[.45em] uppercase mb-3">// El proceso</p>
+        <h2 className="section-title text-5xl md:text-7xl border-l-8 border-orange pl-6 leading-none mb-16">
+          CÓMO_<br/>FUNCIONA
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0 border border-border">
+          {steps.map((s, i) => (
+            <div key={i} className="border-r border-border last:border-0 p-8 flex flex-col gap-4">
+              <span className="font-condensed font-black italic text-5xl text-orange/30 leading-none">{s.n}</span>
+              <h3 className="font-condensed font-black italic text-xl uppercase leading-tight">{s.title}</h3>
+              <p className="font-mono text-gray-500 text-xs leading-loose">{s.desc}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-8 flex flex-col md:flex-row gap-4 items-center justify-between border border-border p-8">
+          <div>
+            <p className="font-condensed font-black italic text-2xl">¿Listo para encargar?</p>
+            <p className="font-mono text-gray-500 text-xs mt-1">Respondemos en menos de 48 horas.</p>
+          </div>
+          <div className="flex gap-3 flex-wrap">
+            <a href="#catalogo" className="btn-primary px-8 py-3 text-lg">Ver Modelos</a>
+            <a href="https://wa.me/5491100000000" target="_blank" rel="noopener noreferrer"
+               className="btn-secondary px-8 py-3 text-lg">WhatsApp</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ── CART SIDEBAR ── */
+function CartSidebar({ cart, isOpen, onClose, onRemove, onQtyChange, onCheckout }) {
+  const total = cart.reduce((acc, i) => acc + i.price * i.qty, 0);
+  return (
+    <>
+      <div className={`overlay fixed inset-0 bg-bg/80 backdrop-blur-sm z-[90] ${isOpen ? 'show' : ''}`} onClick={onClose}/>
+      <div className={`cart-sidebar fixed top-0 right-0 h-full w-full max-w-md bg-bg border-l border-border z-[100] flex flex-col ${isOpen ? 'open' : ''}`}>
+        <div className="flex items-center justify-between p-6 border-b border-border flex-shrink-0">
+          <div>
+            <h3 className="font-condensed font-black italic text-2xl uppercase">Mi Pedido</h3>
+            <p className="font-mono text-[10px] text-gray-600 uppercase tracking-widest">Encargos seleccionados</p>
+          </div>
+          <button onClick={onClose} className="text-gray-500 hover:text-orange transition-colors p-1">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div className="flex-grow overflow-y-auto p-6 space-y-4">
+          {cart.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="font-condensed font-black italic text-5xl text-gray-700 mb-3">VACÍO</p>
+              <p className="font-mono text-xs text-gray-600 uppercase tracking-widest mb-6">Agregá modelos a tu pedido</p>
+              <button onClick={onClose} className="btn-secondary px-8 py-3 text-sm">Ver Modelos</button>
+            </div>
+          ) : cart.map(item => (
+            <div key={`${item.id}-${item.size}`} className="flex gap-4 border border-border p-3 bg-card hover:border-orange/30 transition-colors">
+              <img src={item.img} alt={item.model} className="w-20 h-20 object-cover border border-border flex-shrink-0"
+                   onError={e => { e.target.src='https://via.placeholder.com/80x80/120b05/FF6600?text=GG'; }}/>
+              <div className="flex-grow min-w-0">
+                <p className="font-mono text-[10px] text-orange uppercase tracking-widest">{item.brand}</p>
+                <p className="font-condensed font-black text-xl uppercase leading-tight">{item.model}</p>
+                <p className="font-mono text-gray-500 text-xs italic">{item.color} · T.{item.size}</p>
+                <div className="flex items-center justify-between mt-3">
+                  <div className="flex items-center border border-border">
+                    <button onClick={() => onQtyChange(item, item.qty-1)}
+                      className="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-orange transition-colors font-bold text-sm">-</button>
+                    <span className="font-mono text-sm w-7 text-center">{item.qty}</span>
+                    <button onClick={() => onQtyChange(item, item.qty+1)}
+                      className="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-orange transition-colors font-bold text-sm">+</button>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-condensed font-black italic text-xl">${item.price * item.qty}</span>
+                    <button onClick={() => onRemove(item)} className="text-gray-600 hover:text-red-500 transition-colors font-mono text-xs">×</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        {cart.length > 0 && (
+          <div className="border-t border-border p-6 flex-shrink-0">
+            <div className="flex justify-between items-baseline mb-1">
+              <span className="font-mono text-xs uppercase tracking-widest text-gray-500">Total estimado</span>
+              <span className="font-condensed font-black italic text-3xl">${total} <span className="text-sm text-gray-500 font-mono not-italic font-normal">USD</span></span>
+            </div>
+            <p className="font-mono text-[10px] text-gray-600 mb-5">El valor en ARS se cotiza al confirmar el encargo.</p>
+            <button onClick={onCheckout} className="btn-primary w-full py-4 text-xl mb-2">Confirmar Encargo</button>
+            <button onClick={onClose}    className="btn-secondary w-full py-3 text-sm">Seguir Eligiendo</button>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+/* ── CHECKOUT MODAL ── */
+function CheckoutModal({ cart, onClose }) {
+  const total = cart.reduce((acc, i) => acc + i.price * i.qty, 0);
+  const [step,    setStep]    = useState(1); // 1=form, 2=loading, 3=success, 4=error
+  const [form,    setForm]    = useState({ name:'', email:'', phone:'', province:'', address:'' });
+  const [waLink,  setWaLink]  = useState('');
+  const [errMsg,  setErrMsg]  = useState('');
+
+  const fields = [
+    { key:'name',     label:'Nombre completo',    type:'text' },
+    { key:'email',    label:'Email',               type:'email' },
+    { key:'phone',    label:'WhatsApp / Teléfono', type:'tel' },
+    { key:'province', label:'Provincia',           type:'text' },
+    { key:'address',  label:'Dirección de envío',  type:'text' },
+  ];
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStep(2); // loading
+
+    // Armar los items para el backend
+    const items = cart.flatMap(item =>
+      Array.from({ length: item.qty }, () => ({
+        brand: item.brand,
+        model: item.model,
+        color: item.color,
+        size:  item.size,
+        price: item.price,
+      }))
+    );
+
+    const cliente = {
+      nombre:    form.name,
+      email:     form.email,
+      telefono:  form.phone,
+      provincia: form.province,
+      direccion: form.address,
+    };
+
+    try {
+      const res  = await fetch('http://localhost:3001/api/pedido', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ items, cliente }),
+      });
+      const data = await res.json();
+
+      if (data.ok) {
+        setWaLink(data.whatsappUrl);
+        setStep(3); // success
+        // Abrir WhatsApp automáticamente
+        window.open(data.whatsappUrl, '_blank');
+      } else {
+        setErrMsg(data.error || 'Error al procesar el pedido.');
+        setStep(4); // error
+      }
+    } catch (err) {
+      setErrMsg('No se pudo conectar con el servidor. Asegurate de que el backend esté corriendo.');
+      setStep(4); // error
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-bg/90 backdrop-blur-md" onClick={step !== 2 ? onClose : undefined}/>
+      <div className="relative bg-card border border-border w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-border">
+          <h3 className="font-condensed font-black italic text-2xl uppercase">
+            {step === 1 && 'Datos del Encargo'}
+            {step === 2 && 'Procesando...'}
+            {step === 3 && '¡Pedido Confirmado!'}
+            {step === 4 && 'Algo salió mal'}
+          </h3>
+          {step !== 2 && (
+            <button onClick={onClose} className="text-gray-500 hover:text-orange transition-colors">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          )}
+        </div>
+
+        {/* PASO 1 — Formulario */}
+        {step === 1 && (
+          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            {fields.map(f => (
+              <input key={f.key} type={f.type} placeholder={f.label} required
+                value={form[f.key]} onChange={e => setForm({...form,[f.key]:e.target.value})}
+                className="px-4 py-3 text-sm w-full"/>
+            ))}
+            <div className="border border-border p-4 bg-bg">
+              <p className="font-mono text-[10px] text-orange uppercase tracking-widest mb-3">Detalle del pedido</p>
+              {cart.map(item => (
+                <div key={`${item.id}-${item.size}`} className="flex justify-between font-mono text-xs text-gray-400 py-1 border-b border-border last:border-0">
+                  <span>{item.brand} {item.model} T.{item.size} x{item.qty}</span>
+                  <span>${item.price * item.qty} USD</span>
+                </div>
+              ))}
+              <div className="flex justify-between mt-3 font-condensed font-black italic text-2xl">
+                <span>TOTAL REF.</span><span>${total} USD</span>
+              </div>
+              <p className="font-mono text-[10px] text-gray-600 mt-2">Precio final en ARS a confirmar por WhatsApp.</p>
+            </div>
+            <button type="submit" className="btn-primary w-full py-4 text-xl">Confirmar Encargo</button>
+          </form>
+        )}
+
+        {/* PASO 2 — Loading */}
+        {step === 2 && (
+          <div className="p-16 text-center">
+            <div className="inline-block w-10 h-10 border-4 border-border border-t-orange rounded-full mb-6"
+                 style={{animation:'spin 1s linear infinite'}}/>
+            <p className="font-condensed font-black italic text-xl uppercase text-gray-400">Enviando pedido...</p>
+            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+          </div>
+        )}
+
+        {/* PASO 3 — Éxito */}
+        {step === 3 && (
+          <div className="p-10 text-center">
+            <p className="font-condensed font-black italic text-6xl text-orange mb-4">🔥</p>
+            <h4 className="section-title text-3xl mb-4">ENCARGO RECIBIDO</h4>
+            <p className="font-mono text-gray-400 text-sm leading-loose mb-4">
+              ¡Gracias, {form.name}! Te mandamos un email de confirmación y se abrió WhatsApp para coordinar el pago.
+            </p>
+            <p className="font-mono text-xs text-gray-600 mb-6">
+              Ref: <span className="text-orange font-bold">${total} USD</span> · <span className="text-white">{form.email}</span>
+            </p>
+            <a href={waLink} target="_blank" rel="noopener noreferrer" className="btn-primary px-8 py-3 text-lg mb-3 w-full">
+              Abrir WhatsApp
+            </a>
+            <button onClick={onClose} className="btn-secondary w-full py-3 text-sm mt-2">Volver al Catálogo</button>
+          </div>
+        )}
+
+        {/* PASO 4 — Error */}
+        {step === 4 && (
+          <div className="p-10 text-center">
+            <p className="font-condensed font-black italic text-5xl text-red-500 mb-4">!</p>
+            <h4 className="section-title text-2xl mb-4 text-red-400">ERROR</h4>
+            <p className="font-mono text-gray-400 text-sm leading-loose mb-6">{errMsg}</p>
+            <button onClick={() => setStep(1)} className="btn-primary px-8 py-3 text-lg w-full">Intentar de nuevo</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── FOOTER ── */
+function Footer() {
+  return (
+    <footer className="border-t border-border py-12 px-6 bg-card/30">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 pb-10 border-b border-border mb-8">
+          <div>
+            <p className="logo-glitch font-condensed font-black italic text-orange text-4xl leading-none mb-4">GG&apos;SNK</p>
+            <p className="font-mono text-gray-600 text-xs leading-loose">
+              Retro runners importados.<br/>
+              Pedidos por encargo · City Bell, Argentina.
+            </p>
+          </div>
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[.3em] text-gray-600 mb-4">Navegación</p>
+            <div className="flex flex-col gap-3">
+              {[['#inicio','Inicio'],['#modelos','Modelos'],['#catalogo','Catálogo'],['#como-funciona','Cómo Funciona']].map(([h,l]) => (
+                <a key={h} href={h} className="font-mono text-xs text-gray-500 hover:text-orange transition-colors uppercase tracking-widest" style={{textDecoration:'none'}}>{l}</a>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[.3em] text-gray-600 mb-4">Contacto</p>
+            <div className="flex flex-col gap-3">
+              <a href="https://instagram.com/ggsneakers" target="_blank" rel="noopener noreferrer"
+                 className="font-mono text-xs uppercase tracking-widest text-gray-500 hover:text-orange transition-colors" style={{textDecoration:'none'}}>Instagram</a>
+              <a href="https://wa.me/5491100000000" target="_blank" rel="noopener noreferrer"
+                 className="font-mono text-xs uppercase tracking-widest text-gray-500 hover:text-orange transition-colors" style={{textDecoration:'none'}}>WhatsApp</a>
+            </div>
+          </div>
+        </div>
+        <p className="font-mono text-[10px] uppercase tracking-[.4em] text-gray-700 text-center">
+          © 2026 GGsneakers · City Bell, Argentina · Pedidos por encargo
+        </p>
+      </div>
+    </footer>
+  );
+}
+
+/* ── APP ── */
+function App() {
+  const [cart,         setCart]         = useState([]);
+  const [cartOpen,     setCartOpen]     = useState(false);
+  const [toast,        setToast]        = useState(null);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const cartCount = cart.reduce((acc, i) => acc + i.qty, 0);
+
+  const handleAdd = useCallback((product, size) => {
+    setCart(prev => {
+      const exists = prev.find(i => i.id === product.id && i.size === size);
+      if (exists) return prev.map(i => i.id === product.id && i.size === size ? {...i, qty:i.qty+1} : i);
+      return [...prev, {...product, size, qty:1}];
+    });
+    setToast(`${product.brand} ${product.model} T.${size}`);
+  }, []);
+
+  const handleRemove = useCallback((item) => {
+    setCart(prev => prev.filter(i => !(i.id === item.id && i.size === item.size)));
+  }, []);
+
+  const handleQtyChange = useCallback((item, newQty) => {
+    if (newQty <= 0) { handleRemove(item); return; }
+    setCart(prev => prev.map(i => i.id === item.id && i.size === item.size ? {...i, qty:newQty} : i));
+  }, [handleRemove]);
+
+  return (
+    <>
+      {toast && <Toast message={toast} onDone={() => setToast(null)}/>}
+      <Navbar cartCount={cartCount} onCartOpen={() => setCartOpen(true)}/>
+      <Ticker/>
+      <Hero/>
+      <LifestyleSection/>
+      <Catalog onAdd={handleAdd}/>
+      <ComoFunciona/>
+      <Footer/>
+      <CartSidebar
+        cart={cart} isOpen={cartOpen}
+        onClose={() => setCartOpen(false)}
+        onRemove={handleRemove}
+        onQtyChange={handleQtyChange}
+        onCheckout={() => { setCartOpen(false); setCheckoutOpen(true); }}
+      />
+      {checkoutOpen && (
+        <CheckoutModal
+          cart={cart}
+          onClose={() => { setCheckoutOpen(false); setCart([]); }}
+        />
+      )}
+    </>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App/>);
+</script>
+</body>
+</html>
