@@ -879,7 +879,7 @@ function CheckoutModal({ cart, onClose }) {
     );
     const cliente = { nombre:form.name, email:form.email, telefono:form.phone, provincia:form.province, direccion:form.address };
     try {
-      const res  = await fetch('http://localhost:3001/api/pedido', {
+      const res  = await fetch('https://ggsnk-backend.onrender.com/api/pedido', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ items, cliente }),
       });
