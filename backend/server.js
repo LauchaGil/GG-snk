@@ -79,18 +79,27 @@ ${filas}
 }
 
 function formatearMensajeWhatsApp(items, cliente) {
-  const lineas = items.map(item =>
-    `- ${item.brand} ${item.model} | ${item.color} | Talle ${item.size} | $${item.price} USD`
-  ).join('\n');
+  const lineas = items.map((item, i) =>
+    `👟 *${item.brand} ${item.model}*\n` +
+    `   • Color: ${item.color}\n` +
+    `   • Talle: ${item.size} EUR\n` +
+    `   • Precio: $${item.price} USD`
+  ).join('\n\n');
 
   const total = items.reduce((sum, i) => sum + i.price, 0);
 
   return encodeURIComponent(
-    `Hola! Quiero hacer un pedido en GG'SNK\n\n` +
-    `Nombre: ${cliente.nombre}\n\n` +
-    `Productos:\n${lineas}\n\n` +
-    `Total: $${total} USD\n\n` +
-    `Quedo a la espera para coordinar el pago`
+    `🔥 *NUEVO PEDIDO — GG'SNK*\n` +
+    `━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+    `👤 *Datos del cliente*\n` +
+    `Nombre: ${cliente.nombre}\n` +
+    `Provincia: ${cliente.provincia || 'No indicada'}\n\n` +
+    `📦 *Productos*\n\n` +
+    `${lineas}\n\n` +
+    `━━━━━━━━━━━━━━━━━━━━━━\n` +
+    `💵 *TOTAL: $${total} USD*\n` +
+    `━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+    `Quedo a la espera para coordinar el pago 🙌`
   );
 }
 
