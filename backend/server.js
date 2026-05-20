@@ -89,17 +89,17 @@ function formatearMensajeWhatsApp(items, cliente) {
   const total = items.reduce((sum, i) => sum + i.price, 0);
 
   return encodeURIComponent(
-    `🔥 *NUEVO PEDIDO — GG'SNK*\n` +
-    `━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-    `👤 *Datos del cliente*\n` +
+    `\u{1F6D2} *NUEVO PEDIDO — GG'SNK*\n` +
+    `--------------------\n\n` +
+    `\u{1F464} *Datos del cliente*\n` +
     `Nombre: ${cliente.nombre}\n` +
     `Provincia: ${cliente.provincia || 'No indicada'}\n\n` +
-    `📦 *Productos*\n\n` +
+    `\u{1F4E6} *Productos*\n\n` +
     `${lineas}\n\n` +
-    `━━━━━━━━━━━━━━━━━━━━━━\n` +
-    `💵 *TOTAL: $${total} USD*\n` +
-    `━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-    `Quedo a la espera para coordinar el pago 🙌`
+    `--------------------\n` +
+    `\u{1F4B5} *TOTAL: $${total} USD*\n` +
+    `--------------------\n\n` +
+    `Quedo a la espera para coordinar el pago \u{1F91D}`
   );
 }
 
