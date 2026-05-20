@@ -878,10 +878,25 @@ function CartSidebar({ cart, isOpen, onClose, onRemove, onQtyChange, onCheckout 
 /* ── CHECKOUT MODAL ── */
 function CheckoutModal({ cart, onClose }) {
   const total = cart.reduce((acc, i) => acc + i.price * i.qty, 0);
-  const [step,   setStep]   = useState(1);
-  const [form,   setForm]   = useState({ name:'', email:'', phone:'', province:'', address:'' });
-  const [waLink, setWaLink] = useState('');
-  const [errMsg, setErrMsg] = useState('');
+  const [step,     setStep]     = useState(1);
+  const [form,     setForm]     = useState({ name:'', email:'', phone:'', province:'', address:'' });
+  const [waLink,   setWaLink]   = useState('');
+  const [errMsg,   setErrMsg]   = useState('');
+  const [phoneErr, setPhoneErr] = useState('');
+
+  // Valida formato WhatsApp Argentina: +54 9 [área] [número]
+  // Ejemplos válidos: +5492214123456 / +54 9 221 4123456 / +54911 12345678
+  const validarTelefono = (tel) => {
+    const limpio = tel.replace(/\s/g, '');
+    if (!limpio.startsWith('+54'))
+      return 'El número debe empezar con +54 (ej: +54 9 221 4123456)';
+    const resto = limpio.slice(3); // quita +54
+    if (!resto.startsWith('9'))
+      return 'Después del +54 va el 9 de celular (ej: +54 9 221 4123456)';
+    if (limpio.replace(/\D/g,'').length < 12)
+      return 'Número incompleto — revisá el código de área (ej: +54 9 221 4123456)';
+    return '';
+  };
 
   const fields = [
     { key:'name',     label:'Nombre completo',    type:'text' },
@@ -893,6 +908,9 @@ function CheckoutModal({ cart, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const telError = validarTelefono(form.phone);
+    if (telError) { setPhoneErr(telError); return; }
+    setPhoneErr('');
     setStep(2);
     const items = cart.flatMap(item =>
       Array.from({ length: item.qty }, () => ({
@@ -935,9 +953,22 @@ function CheckoutModal({ cart, onClose }) {
         {step===1 && (
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             {fields.map(f => (
-              <input key={f.key} type={f.type} placeholder={f.label} required
-                value={form[f.key]} onChange={e => setForm({...form,[f.key]:e.target.value})}
-                className="px-4 py-3 text-sm w-full"/>
+              <div key={f.key}>
+                <input type={f.type} placeholder={f.label} required
+                  value={form[f.key]}
+                  onChange={e => {
+                    setForm({...form,[f.key]:e.target.value});
+                    if (f.key === 'phone') setPhoneErr('');
+                  }}
+                  className={`px-4 py-3 text-sm w-full ${f.key === 'phone' && phoneErr ? 'border-red-500' : ''}`}
+                />
+                {f.key === 'phone' && phoneErr && (
+                  <p className="font-mono text-[11px] text-red-400 mt-1 px-1">⚠ {phoneErr}</p>
+                )}
+                {f.key === 'phone' && !phoneErr && (
+                  <p className="font-mono text-[10px] text-gray-600 mt-1 px-1">Formato: +54 9 221 4123456</p>
+                )}
+              </div>
             ))}
             <div className="border border-border p-4 bg-bg">
               <p className="font-mono text-[10px] text-orange uppercase tracking-widest mb-3">Detalle del pedido</p>
