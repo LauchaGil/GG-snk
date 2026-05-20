@@ -123,26 +123,26 @@ app.post('/api/pedido', async (req, res) => {
     );
     const pedidoId = result.rows[0].id;
 
-    // 2 — Email a la tienda
-    await transporter.sendMail({
+    // 2 — Link WhatsApp
+    const waLink = `https://wa.me/${process.env.WHATSAPP_NUMERO}?text=${formatearMensajeWhatsApp(items, cliente)}`;
+
+    // 3 — Responder inmediatamente (no esperamos los emails)
+    res.json({ ok: true, whatsappUrl: waLink, pedidoId });
+
+    // 4 — Emails en segundo plano (no bloquean la respuesta)
+    transporter.sendMail({
       from   : `"GG'SNK Pedidos" <${process.env.GMAIL_USER}>`,
       to     : process.env.EMAIL_DESTINO,
       subject: `🛒 Nuevo pedido #${pedidoId} — ${cliente.nombre}`,
       text   : `Pedido #${pedidoId}\n` + formatearPedidoEmail(items, cliente),
-    });
+    }).catch(err => console.error('Error email tienda:', err.message));
 
-    // 3 — Email al cliente
-    await transporter.sendMail({
+    transporter.sendMail({
       from   : `"GG'SNK" <${process.env.GMAIL_USER}>`,
       to     : cliente.email,
       subject: `✅ Recibimos tu pedido #${pedidoId} — GG'SNK`,
       text   : `Hola ${cliente.nombre}!\n\nRecibimos tu pedido y te escribimos en las próximas horas para coordinar el pago.\n\n${formatearPedidoEmail(items, cliente)}\n\n— El equipo de GG'SNK`,
-    });
-
-    // 4 — Link WhatsApp
-    const waLink = `https://wa.me/${process.env.WHATSAPP_NUMERO}?text=${formatearMensajeWhatsApp(items, cliente)}`;
-
-    res.json({ ok: true, whatsappUrl: waLink, pedidoId });
+    }).catch(err => console.error('Error email cliente:', err.message));
 
   } catch (err) {
     console.error('Error al procesar pedido:', err.message);
