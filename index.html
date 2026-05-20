@@ -67,6 +67,21 @@
 
     .noise{position:relative}
     .noise::before{content:'';position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:1;opacity:.5}
+
+    .brand-tab{border-bottom:2px solid transparent;transition:all .2s}
+    .brand-tab.active{border-bottom-color:#FF6600;color:#FF6600}
+    .brand-tab:not(.active):hover{color:#fff}
+
+    .cw-thumb{transition:border-color .15s, transform .15s}
+    .cw-thumb:hover{transform:scale(1.08)}
+    .cw-thumb.active{border-color:#FF6600 !important;transform:scale(1.05)}
+
+    .gallery-thumb{transition:border-color .15s,opacity .15s}
+    .gallery-thumb.active{border-color:#FF6600 !important;opacity:1}
+    .gallery-thumb:not(.active){opacity:0.6}
+    .gallery-thumb:hover{opacity:1}
+
+    @keyframes spin{to{transform:rotate(360deg)}}
   </style>
 </head>
 <body>
@@ -77,68 +92,194 @@ const { useState, useEffect, useCallback, useRef } = React;
 const CAT  = 'img catalogo/';
 const LIFE = 'img lifestyle/';
 
+/* ─────────────────────────────────────────────
+   CATÁLOGO COMPLETO — marca / modelo / colorway
+   Estructura: brand → model → colorways[]
+   Cada colorway: { id, name, folder, images[], price? }
+───────────────────────────────────────────── */
 const MODELS = [
+
+  /* ══════════════ NIKE ══════════════ */
   {
     id: 'nike-p6000',
     brand: 'NIKE',
     model: 'P-6000',
+    price: 115,
+    sizes: [38,39,40,41,42,43,44],
+    coverCw: 'p6000-black-white',
     lifestyleImg: LIFE + 'Nike P-6000 White 2.jpg',
-    variants: [
-      { id:101, color:'White',         price:115, img:CAT+'P-6000/P-6000 white.jpeg',         sizes:[38,39,40,41,42,43,44] },
-      { id:102, color:'Brown',         price:115, img:CAT+'P-6000/P-6000 brown.jpeg',         sizes:[38,39,40,41,42,43,44] },
-      { id:103, color:'White & Brown', price:115, img:CAT+'P-6000/P-6000 white & brown.jpeg', sizes:[38,39,40,41,42,43,44] },
-      { id:104, color:'Grey',          price:115, img:CAT+'P-6000/P-6000 GREY.jpeg',          sizes:[38,39,40,41,42,43,44] },
-      { id:105, color:'Grey & Black',  price:115, img:CAT+'P-6000/P-6000 grey & black.jpeg',  sizes:[38,39,40,41,42,43,44] },
-      { id:106, color:'Black',         price:115, img:CAT+'P-6000/P-6000 black.jpg',          sizes:[38,39,40,41,42,43,44] },
-      { id:107, color:'Plateadas',     price:115, img:CAT+'P-6000/P-6000 plateadas.jpeg',     sizes:[38,39,40,41,42,43,44] },
-      { id:108, color:'Red & White',   price:115, img:CAT+'P-6000/P-6000 red & white.jpeg',   sizes:[38,39,40,41,42,43,44] },
+    colorways: [
+      { id:'p6000-white',            name:'White',                   folder: CAT+'Nike/P-6000/white/', images:['main/39cc8ef4.jpg','qc/71d5c903.jpg','qc/92785530.jpg','qc/a682f1cc.jpg'] },
+      { id:'p6000-white-black',      name:'White / Black',           folder: CAT+'Nike/P-6000/white_black/', images:['main/c698a1e8.jpg','qc/16c856ab.jpg','qc/93715f22.jpg','qc/b22f939d.jpg'] },
+      { id:'p6000-white-grey',       name:'White / Grey',            folder: CAT+'Nike/P-6000/white_grey/', images:['main/41df5cd8.jpg','qc/c7b45ab5.jpg','qc/eb2dd3f8.jpg','qc/eb541e9e.jpg'] },
+      { id:'p6000-white-blue',       name:'White / Blue',            folder: CAT+'Nike/P-6000/white_blue/', images:['main/ac0bdc66.jpg','qc/15fcacbc.jpg','qc/a8d45c5e.jpg','qc/ca88a0c6.jpg'] },
+      { id:'p6000-white-brown',      name:'White / Brown',           folder: CAT+'Nike/P-6000/white_brown/', images:['main/bc76816f.jpg','qc/6672efec.jpg','qc/bc596515.jpg','qc/fddbb1bb.jpg'] },
+      { id:'p6000-white-silver-blk', name:'White / Silver / Black',  folder: CAT+'Nike/P-6000/white_silver_black/', images:['main/56e2f00f.jpg','qc/1adcdb17.jpg','qc/9fd8df21.jpg','qc/eef5834f.jpg'] },
+      { id:'p6000-black',            name:'Black',                   folder: CAT+'Nike/P-6000/black/', images:['main/5bb08551.jpg','qc/5c18df50.jpg','qc/b2e5f9cf.jpg','qc/b4fd223a.jpg'] },
+      { id:'p6000-black-ii',         name:'Black II',                folder: CAT+'Nike/P-6000/black2/', images:['main/27a57255.jpg','qc/48dd5880.jpg','qc/4c9c3746.jpg','qc/52f5a565.jpg'] },
+      { id:'p6000-triple-black',     name:'Triple Black',            folder: CAT+'Nike/P-6000/black_black/', images:['main/8604d2b4.jpg','qc/46203e6c.jpg','qc/88ec65a1.jpg','qc/96925504.jpg'] },
+      { id:'p6000-black-white',      name:'Black / White',           folder: CAT+'Nike/P-6000/black_white/', images:['main/2198724c.jpg','qc/25ebb4d8.jpg','qc/5fa1b36a.jpg','qc/d01d3b10.jpg'] },
+      { id:'p6000-black-grey',       name:'Black / Grey',            folder: CAT+'Nike/P-6000/black_grey/', images:['main/dea36441.jpg','qc/42300f1e.jpg','qc/4a53c58f.jpg','qc/52a9fea9.jpg'] },
+      { id:'p6000-black-blue',       name:'Black / Blue',            folder: CAT+'Nike/P-6000/black_blue/', images:['main/f8b66614.jpg','qc/a71f5381.jpg','qc/b26d1e72.jpg','qc/c084cf46.jpg'] },
+      { id:'p6000-black-fluo',       name:'Black / Fluo',            folder: CAT+'Nike/P-6000/black_fluo/', images:['main/3d2bed70.jpg','qc/9c936de9.jpg','qc/d04294b4.jpg','qc/d31e4792.jpg'] },
+      { id:'p6000-black-grey-yel',   name:'Black / Grey / Yellow',   folder: CAT+'Nike/P-6000/black_grey_yellow/', images:['main/a9ea3e80.jpg','qc/76e79aa7.jpg','qc/9e3b3c97.jpg','qc/a6eadd5b.jpg'] },
+      { id:'p6000-grey-black',       name:'Grey / Black',            folder: CAT+'Nike/P-6000/grey_black/', images:['main/c531d2b4.jpg','qc/690a6d9b.jpg','qc/a377690e.jpg','qc/b7080fa6.jpg'] },
+      { id:'p6000-grey-green',       name:'Grey / Green',            folder: CAT+'Nike/P-6000/grey_green/', images:['main/bf57754f.jpg','qc/14d3bab5.jpg','qc/506ce331.jpg','qc/5f3536b4.jpg'] },
+      { id:'p6000-grey-turquoise',   name:'Grey / Turquoise',        folder: CAT+'Nike/P-6000/grey_turquoise/', images:['main/cb5537f8.jpg','qc/5de371f2.jpg','qc/b4914ac5.jpg','qc/b4fc0c58.jpg'] },
+      { id:'p6000-grey-camo',        name:'Grey Camo',               folder: CAT+'Nike/P-6000/grey_camo/', images:['main/7ee4de46.jpg','qc/772fb442.jpg','qc/86901839.jpg','qc/c332c899.jpg'] },
+      { id:'p6000-camo-grey',        name:'Camo / Grey',             folder: CAT+'Nike/P-6000/camufladas_grey/', images:['main/fba6bea3.jpg','qc/5ff8cd44.jpg','qc/7c6534db.jpg','qc/bed2e031.jpg'] },
+      { id:'p6000-silver-black',     name:'Silver / Black',          folder: CAT+'Nike/P-6000/silver_black/', images:['main/93d02734.jpg','qc/2a1c75b4.jpg','qc/2ea321c6.jpg','qc/f99ed7f9.jpg'] },
+      { id:'p6000-silver-brown',     name:'Silver / Brown',          folder: CAT+'Nike/P-6000/silver_brown/', images:['main/392f6ae9.jpg','qc/57011fbd.jpg','qc/71ca569c.jpg','qc/ffcb3abf.jpg'] },
+      { id:'p6000-brown-blk-yel',    name:'Brown / Black / Yellow',  folder: CAT+'Nike/P-6000/Brown_black_yellow/', images:['main/c98ac5c7.jpg','qc/0d70154e.jpg','qc/2576880c.jpg','qc/4a6ab543.jpg'] },
+      { id:'p6000-brown-white-blue', name:'Brown / White / Blue',    folder: CAT+'Nike/P-6000/brown_white_blue/', images:['main/d5c1f9d1.jpg','qc/15f3dfad.jpg','qc/27fce23e.jpg','qc/4c57b86d.jpg'] },
     ]
   },
+
+  {
+    id: 'nike-vomero5',
+    brand: 'NIKE',
+    model: 'VOMERO 5',
+    price: 125,
+    sizes: [38,39,40,41,42,43,44],
+    lifestyleImg: LIFE + 'Nike P-6000 manos.jpg',
+    colorways: [
+      { id:'v5-white-black',  name:'White / Black',  folder: CAT+'Nike/Vomero 5/white_black/', images:['main/80945f4a.jpg','qc/2c8be943.jpg','qc/5ff57260.jpg','qc/b99e3ec2.jpg'] },
+      { id:'v5-black',        name:'Black',           folder: CAT+'Nike/Vomero 5/black/', images:['main/304c776c.jpg','qc/1d84def6.jpg','qc/939f53be.jpg','qc/af688eb0.jpg'] },
+      { id:'v5-grey',         name:'Grey',            folder: CAT+'Nike/Vomero 5/grey/', images:['main/bd0f0f74.jpg','qc/13ca26f2.jpg','qc/39b033f8.jpg','qc/7902771d.jpg'] },
+      { id:'v5-silver',       name:'Silver',          folder: CAT+'Nike/Vomero 5/silver/', images:['main/bd0f0f74.jpg','qc/13ca26f2.jpg','qc/39b033f8.jpg','qc/7902771d.jpg'] },
+      { id:'v5-grey-green',   name:'Grey / Green',    folder: CAT+'Nike/Vomero 5/grey_green/', images:['main/1465800b.jpg','qc/2506b17f.jpg','qc/29c9a641.jpg','qc/4363606e.jpg'] },
+      { id:'v5-grey-red',     name:'Grey / Red',      folder: CAT+'Nike/Vomero 5/grey_red/', images:['main/150d4d3c.jpg','qc/1341650a.jpg','qc/649759a2.jpg','qc/651fa211.jpg'] },
+    ]
+  },
+
+  /* ══════════════ NEW BALANCE ══════════════ */
   {
     id: 'nb-740',
     brand: 'NEW BALANCE',
     model: '740',
+    price: 120,
+    sizes: [38,39,40,41,42,43,44],
+    coverCw: '740-black-grey',
     lifestyleImg: LIFE + 'New Balance 740 modelo.jpg',
-    variants: [
-      { id:201, color:'Grey',          price:120, img:CAT+'NB-740/NB-740 Grey.jpg',     sizes:[38,39,40,41,42,43,44] },
-      { id:202, color:'Metallic Mesh', price:120, img:CAT+'NB-740/NB-740 Metallic.jpg', sizes:[38,39,40,41,42,43,44] },
+    colorways: [
+      { id:'740-grey',            name:'Grey',                  folder: CAT+'New Balance/NB-740/grey740/', images:['main/a3a460d7.jpg','qc/35750c1d.jpg','qc/8eadb8e5.jpg','qc/950b0542.jpg'] },
+      { id:'740-silver',          name:'Silver',                folder: CAT+'New Balance/NB-740/silver740/', images:['main/0cf473ee.jpg','qc/4423f62c.jpg','qc/8083b7f8.jpg','qc/c797d7b4.jpg'] },
+      { id:'740-white-blue',      name:'White / Blue',          folder: CAT+'New Balance/NB-740/white_blue740/', images:['main/5953ace0.jpg','qc/68a9fb18.jpg','qc/990b8959.jpg','qc/d27124a9.jpg'] },
+      { id:'740-white-blue-purp', name:'White / Blue / Purple', folder: CAT+'New Balance/NB-740/white_blue_purple740/', images:['main/ebddd126.jpg','qc/133f1e8e.jpg','qc/8444cf56.jpg','qc/b634de30.jpg'] },
+      { id:'740-black',           name:'Black',                 folder: CAT+'New Balance/NB-740/black740/', images:['main/fe576294.jpg','qc/39479bc2.jpg','qc/8f3a22ba.jpg','qc/a77ecfd7.jpg'] },
+      { id:'740-black-grey',      name:'Black / Grey',          folder: CAT+'New Balance/NB-740/black_grey740/', images:['main/d91d71a5.jpg','qc/1475dbb1.jpg','qc/1506ede0.jpg','qc/7818b75b.jpg'] },
+      { id:'740-brown',           name:'Brown',                 folder: CAT+'New Balance/NB-740/brown740/', images:['main/003700fd.jpg','qc/0277c669.jpg','qc/832f5fed.jpg','qc/94267d47.jpg'] },
+      { id:'740-grey-green',      name:'Grey / Green',          folder: CAT+'New Balance/NB-740/grey_green/', images:['main/7d6bd3f4.jpg','qc/7a93988c.jpg','qc/ac604106.jpg','qc/de01b1bf.jpg'] },
+      { id:'740-grey-green-water',name:'Grey / Green Water',    folder: CAT+'New Balance/NB-740/grey_green_water740/', images:['main/d5925a3a.jpg','qc/5ce08fe2.jpg','qc/77415209.jpg','qc/bde7ec67.jpg'] },
+      { id:'740-yellow',          name:'Yellow',                folder: CAT+'New Balance/NB-740/yellow740/', images:['main/f1d448a9.jpg','qc/5292605f.jpg','qc/8d86d59b.jpg','qc/edfcde36.jpg'] },
     ]
   },
+
   {
     id: 'nb-1906',
     brand: 'NEW BALANCE',
     model: '1906',
+    price: 130,
+    sizes: [39,40,41,42,43,44,45],
+    coverCw: '1906-grey-silver',
     lifestyleImg: LIFE + 'New Balance negras piedras.jpg',
-    variants: [
-      { id:301, color:'Grey Technical', price:130, img:CAT+'NB-1906/NB-1906 Grey.jpg', sizes:[39,40,41,42,43,44,45] },
+    colorways: [
+      { id:'1906-silver',         name:'Silver',           folder: CAT+'New Balance/NB-1906/silver1906/', images:['main/50dbb5b1.jpg','qc/a80cdf17.jpg','qc/aba3de72.jpg','qc/f311e2aa.jpg'] },
+      { id:'1906-soft-grey',      name:'Soft Grey',        folder: CAT+'New Balance/NB-1906/softgrey1906/', images:['main/pcitem901866017498-128a0000019a232a03d50a81347d_1074_1074.jpg.webp','qc/pcitem901866017498-05d80000019a232a05900a2396f4_1074_1074.jpg.webp','qc/pcitem901866017498-0a500000019a232a09010a231177_1074_1074.jpg.webp','qc/pcitem901866017498-609b0000019a232a0f590a231316_1074_1074.jpg.webp'] },
+      { id:'1906-grey-silver',    name:'Grey / Silver',    folder: CAT+'New Balance/NB-1906/grey_silver1906A/', images:['main/wdseller901606786479-68fb000001929be3d0350a2396c9_1290_1290.jpg.webp','qc/wdseller901606786479-1575000001929be3d0ad0a2393d9_1290_1290.jpg.webp','qc/wdseller901606786479-6948000001929be3d0ef0a230215_1288_1288.jpg.webp','qc/wdseller901606786479-69a7000001929be3d0360a23138d_1290_1290.jpg.webp'] },
+      { id:'1906-grey-r',         name:'Grey (R)',         folder: CAT+'New Balance/NB-1906/grey1906R/', images:['main/wdseller901910887734-406f00000193ef40c9960a210256_1288_1288.jpg.webp','qc/wdseller901910887734-3acd00000193ef40ccb10a23038e_1288_1288.jpg.webp','qc/wdseller901910887734-3c9f00000193ef40cdcc0a20e672_1288_1288.jpg.webp','qc/wdseller901910887734-3dc400000193ef40cabb0a2315ef_1288_1288.jpg.webp'] },
+      { id:'1906-grey-red',       name:'Grey / Red',       folder: CAT+'New Balance/NB-1906/grey_red1906/', images:['main/wdseller901910887734-3c6300000193ef8f28e50a2304aa_1288_1288.jpg.webp','qc/wdseller901910887734-3ede00000193ef8f2c610a23037f_1288_1288.jpg.webp','qc/wdseller901910887734-439e00000193ef8f296a0a811411_1288_1288.jpg.webp','qc/wdseller901910887734-482300000193ef8f2bc20a210139_1288_1288.jpg.webp'] },
+      { id:'1906-blue-a',         name:'Blue',             folder: CAT+'New Balance/NB-1906/blue1906A/', images:['main/pcitem901913014388-58b900000196bdc11f1d0a811411_1920_1440.jpg.webp','qc/pcitem901913014388-53e900000196bdc129a90a239646_1920_1440.jpg.webp','qc/pcitem901913014388-58cb00000196bdc11c630a231316_1920_1440.jpg.webp','qc/pcitem901913014388-5fff00000196bdc1115c0a2303ee_1920_1440.jpg.webp'] },
+      { id:'1906-white-green',    name:'White / Green',    folder: CAT+'New Balance/NB-1906/white_green1906A/', images:['main/open1648171445-1234478995-161e0000019600fb673f0a23b4de_1440_1440.jpg.webp','qc/open1648171445-1234478995-12820000019600fb6be30a8133b0_1440_1440.jpg.webp','qc/open1648171445-1234478995-128c0000019600fb84640a8133b0_1440_1440.jpg.webp','qc/open1648171445-1234478995-746b0000019600fb7bb20a23b491_1440_1440.jpg.webp'] },
+      { id:'1906-white-r',        name:'White (R)',         folder: CAT+'New Balance/NB-1906/white1906R/', images:['main/36b88149.jpg','qc/2be0a52f.jpg','qc/8a84e226.jpg','qc/9a142531.jpg'] },
+      { id:'1906-black-a',        name:'Black (A)',         folder: CAT+'New Balance/NB-1906/black1906A/', images:['main/wdseller901910887734-1fdc00000193ac8d00080a2301f1_1288_1288.jpg.webp','qc/wdseller901910887734-1e9400000193ac8d00630a2301af_1288_1288.jpg.webp','qc/wdseller901910887734-1ec200000193ac8d00980a2302e6_1288_1288.jpg.webp','qc/wdseller901910887734-208800000193ac8d00090a23138d_1288_1288.jpg.webp'] },
+      { id:'1906-black-r',        name:'Black (R)',         folder: CAT+'New Balance/NB-1906/black1906R/', images:['main/6e821f87.jpg','qc/30c84c2b.jpg','qc/bf49514a.jpg','qc/ff9941ea.jpg'] },
+      { id:'1906-black-fuxia',    name:'Black / Fuchsia',  folder: CAT+'New Balance/NB-1906/black_fuxia1906/', images:['main/wdseller901910887734-5ab800000197d01110060a231177_1288_1288.jpg.webp','qc/wdseller901910887734-3e1300000197d01116540a23041a_1288_1288.jpg.webp','qc/wdseller901910887734-3ed100000197d011142a0a811411_1288_1288.jpg.webp','qc/wdseller901910887734-528900000197d01112080a210139_1288_1288.jpg.webp'] },
+      { id:'1906-black-green',    name:'Black / Green',    folder: CAT+'New Balance/NB-1906/black_green1906/', images:['main/59e0f27e.jpg','qc/5ac5eb1e.jpg','qc/ae621fde.jpg','qc/c18b1a67.jpg'] },
+      { id:'1906-black-pink',     name:'Black / Pink',     folder: CAT+'New Balance/NB-1906/black_pink1906/', images:['main/012052f8.jpg','qc/6b04b83d.jpg','qc/7727093e.jpg','qc/7e831d45.jpg'] },
     ]
   },
+
+  /* ══════════════ ASICS ══════════════ */
   {
-    id: 'asics-gel',
+    id: 'asics-kayano14',
     brand: 'ASICS',
     model: 'GEL-KAYANO 14',
+    price: 120,
+    sizes: [37,38,39,40,41,42,43,44],
+    coverCw: 'k14-grey',
     lifestyleImg: LIFE + 'Asics GEL-Kayano 14.jpg',
-    variants: [
-      { id:401, color:'Classic White',  price:120, img:CAT+'ASICS-GEL/ASICS GEL Classic White.jpg', sizes:[37,38,39,40,41,42,43] },
-      { id:402, color:'Cream & Silver', price:135, img:CAT+'ASICS-GEL/ASICS GEL Cream Silver.jpg',  sizes:[37,38,39,40,41,42,43] },
+    colorways: [
+      { id:'k14-silver',       name:'Silver',          folder: CAT+'ASICS/GEL-KAYANO-14/Silver_k14/', images:['main/12e4407f.jpg','qc/43dfcaec.jpg','qc/a5b99899.jpg','qc/b0274264.jpg'] },
+      { id:'k14-silver-white', name:'Silver / White',  folder: CAT+'ASICS/GEL-KAYANO-14/silver_white-k14/', images:['main/3efd958c.jpg','qc/1a3f249b.jpg','qc/376344a2.jpg','qc/84c1f515.jpg'] },
+      { id:'k14-silver-grey',  name:'Silver / Grey',   folder: CAT+'ASICS/GEL-KAYANO-14/silver_grey-k14/', images:['main/358aa730.jpg','qc/080ba514.jpg','qc/87ad2537.jpg','qc/939a68d3.jpg'] },
+      { id:'k14-grey-white',   name:'Grey / White',    folder: CAT+'ASICS/GEL-KAYANO-14/grey_white-k14/', images:['main/92a12806.jpg','qc/48022053.jpg','qc/9f5047f0.jpg','qc/e109dffe.jpg'] },
+      { id:'k14-grey',         name:'Grey',            folder: CAT+'ASICS/GEL-KAYANO-14/grey-k14/', images:['main/02445257.jpg','qc/40f9858f.jpg','qc/64be8ff5.jpg','qc/b6a09a7d.jpg'] },
+      { id:'k14-grey-red',     name:'Grey / Red',      folder: CAT+'ASICS/GEL-KAYANO-14/grey_red-k14/', images:['main/c254fb92.jpg','qc/06339472.jpg','qc/14253d72.jpg','qc/71432744.jpg'] },
+      { id:'k14-blue',         name:'Blue',            folder: CAT+'ASICS/GEL-KAYANO-14/blue-k14/', images:['main/ae08d839.jpg','qc/46cfcf34.jpg','qc/51a7c4a6.jpg','qc/989ec9df.jpg'] },
+      { id:'k14-black',        name:'Black',           folder: CAT+'ASICS/GEL-KAYANO-14/black-k14/', images:['main/4c392b60.jpg','qc/2c16b2cc.jpg','qc/8489065e.jpg','qc/dddf772f.jpg'] },
+      { id:'k14-red-gold',     name:'Red / Gold',      folder: CAT+'ASICS/GEL-KAYANO-14/red_gold-k14/', images:['main/d28ccbf2.jpg','qc/491db8ab.jpg','qc/b23011fc.jpg','qc/c29a3d50.jpg'] },
     ]
   },
+
   {
-    id: 'adidas-response',
+    id: 'asics-kinetic',
+    brand: 'ASICS',
+    model: 'GEL-KINETIC FLUENT',
+    price: 115,
+    sizes: [37,38,39,40,41,42,43,44],
+    lifestyleImg: LIFE + 'ASICS street escaleras.jpg',
+    colorways: [
+      { id:'kf-grey',  name:'Grey',  folder: CAT+'ASICS/GEL-KINETIC-FLUENT/Grey-fluent/', images:['main/ced9b62a.jpg','qc/0d69ff12.jpg','qc/1271574c.jpg','qc/8ec6b6fc.jpg'] },
+      { id:'kf-green', name:'Green', folder: CAT+'ASICS/GEL-KINETIC-FLUENT/green-fluent/', images:['main/48e2ede7.jpg','qc/72ea08b3.jpg','qc/a8d5c187.jpg','qc/f2faccb8.jpg'] },
+    ]
+  },
+
+  {
+    id: 'asics-gel-nyc',
+    brand: 'ASICS',
+    model: 'GEL-NYC',
+    price: 125,
+    sizes: [37,38,39,40,41,42,43,44],
+    coverCw: 'nyc-black-silver',
+    lifestyleImg: LIFE + 'ASICS street escaleras.jpg',
+    colorways: [
+      { id:'nyc-cream',           name:'Cream',                   folder: CAT+'ASICS/GEL-NYC/cream-NYC/', images:['main/5d9770a1.jpg','qc/15103a01.jpg','qc/4f673d51.jpg','qc/9e1f28c6.jpg'] },
+      { id:'nyc-black',           name:'Black',                   folder: CAT+'ASICS/GEL-NYC/black-NYC/', images:['main/5024739d.jpg','qc/30b94d4c.jpg','qc/4e4f0859.jpg','qc/709dc60a.jpg'] },
+      { id:'nyc-black-cream',     name:'Black / Cream',           folder: CAT+'ASICS/GEL-NYC/black_cream-NYC/', images:['main/c84cc7e3.jpg','qc/908efbdd.jpg','qc/d84ad97a.jpg','qc/ff829328.jpg'] },
+      { id:'nyc-black-silver',    name:'Black / Silver',          folder: CAT+'ASICS/GEL-NYC/black_silver-NYC/', images:['main/f4be9eeb.jpg','qc/146c8054.jpg','qc/1639fa4f.jpg','qc/dde4abbd.jpg'] },
+      { id:'nyc-black-greige',    name:'Black / Greige',          folder: CAT+'ASICS/GEL-NYC/black_greige-NYC/', images:['main/94ab6db0.jpg','qc/84064423.jpg','qc/99fe75b6.jpg','qc/e6b7fe1f.jpg'] },
+      { id:'nyc-black-fjorgrey',  name:'Black / Fjord Grey',      folder: CAT+'ASICS/GEL-NYC/black_fjorgrey-NYC/', images:['main/acd70dff.jpg','qc/aaf82070.jpg','qc/b5552b8c.jpg','qc/b606a5da.jpg'] },
+      { id:'nyc-blue-white',      name:'Blue / White',            folder: CAT+'ASICS/GEL-NYC/blue_white-NYC/', images:['main/92558d29.jpg','qc/0c194ce4.jpg','qc/c53a7215.jpg','qc/fed8d72d.jpg'] },
+      { id:'nyc-charcoal',        name:'Charcoal / Grey / Blue',  folder: CAT+'ASICS/GEL-NYC/charcoal_grey_blue-NYC/', images:['main/0550a4db.jpg','qc/37f76acd.jpg','qc/cd57e5bc.jpg','qc/e3448fcd.jpg'] },
+      { id:'nyc-gravel-black',    name:'Gravel / Black',          folder: CAT+'ASICS/GEL-NYC/gravel_black-NYC/', images:['main/bad951d1.jpg','qc/05549dc3.jpg','qc/5d99b793.jpg','qc/606a9fa0.jpg'] },
+      { id:'nyc-green-white',     name:'Green / White',           folder: CAT+'ASICS/GEL-NYC/green_white-NYC/', images:['main/f30635b6.jpg','qc/73f079a8.jpg','qc/b1f76f78.jpg','qc/d334b5c2.jpg'] },
+      { id:'nyc-white-brown',     name:'White / Brown',           folder: CAT+'ASICS/GEL-NYC/white_brown-NYC/', images:['main/dbd355e5.jpg','qc/42c8e023.jpg','qc/9f590abd.jpg','qc/b0cf75f8.jpg'] },
+    ]
+  },
+
+  /* ══════════════ ADIDAS ══════════════ */
+  {
+    id: 'adidas-response-cl',
     brand: 'ADIDAS',
     model: 'RESPONSE CL',
-    lifestyleImg: CAT + 'Adidas-Response/Response CL Bad Bunny Western.jpg',
-    variants: [
-      { id:501, color:'Bad Bunny · Black', price:145, img:CAT+'Adidas-Response/Response CL Bad Bunny Black.jpg', sizes:[38,39,40,41,42,43,44] },
+    price: 120,
+    sizes: [38,39,40,41,42,43,44],
+    coverCw: 'cl-badbunny',
+    lifestyleImg: CAT + 'Adidas/Response/Response CL Bad Bunny Western.jpg',
+    colorways: [
+      { id:'cl-cream',       name:'Cream',            folder: CAT+'Adidas/Response/Response CL/cream-CL/', images:['main/pcitem1774107772-3230000001920d9cd5910a2396f4_1152_768.jpg.webp','qc/pcitem1774107772-2f7d000001920d9cd77f0a20e2c5_1152_768.jpg.webp','qc/pcitem1774107772-3553000001920d9ce6eb0a2303ee_1152_768.jpg.webp','qc/pcitem1774107772-6fb6000001920d9cdc100a21146b_1152_768.jpg.webp'] },
+      { id:'cl-grey',        name:'Grey',             folder: CAT+'Adidas/Response/Response CL/grey-CL/', images:['main/pcitem1774107772-27340000018c58f84ed80a2312e8_1152_768.jpg.webp','qc/pcitem1774107772-23740000018c58f864300a22d4f5_1152_768.jpg.webp','qc/pcitem1774107772-27da0000018c58f856550a20e2c5_1152_768.jpg.webp','qc/pcitem1774107772-32190000018c58f8512d0a20e672_1152_768.jpg.webp'] },
+      { id:'cl-badbunny',    name:'Bad Bunny — White',folder: CAT+'Adidas/Response/Response CL/white-badbunny/', images:['main/weidian1558770107-24bc0000018f9c592bfa0a20e35c_1512_2016.jpg.webp','qc/weidian1558770107-25390000018f9c5927730a231316_1465_1953.jpg.webp','qc/weidian1558770107-27c90000018f9c5909f60a21146b_1512_2016.jpg.webp','qc/weidian1558770107-62590000018f9c59047d0a230115_1512_2016.jpg.webp'], price: 145 },
     ]
   },
 ];
 
 const LIFESTYLE_IMGS = [
-  { src: LIFE+'Asics GEL-Kayano 14.jpg',     pos: 'center center' },
-  { src: LIFE+'New Balance 740 modelo.jpg',  pos: 'center center' },
-  { src: LIFE+'Nike P-6000 manos.jpg',       pos: 'center center' },
-  { src: LIFE+'New Balance negras piedras.jpg', pos: 'center center' },
+  { src: LIFE+'Asics GEL-Kayano 14.jpg',        pos: 'center 30%' },
+  { src: LIFE+'New Balance 740 modelo.jpg',      pos: 'center center' },
+  { src: LIFE+'Nike P-6000 manos.jpg',           pos: 'center center' },
+  { src: LIFE+'New Balance negras piedras.jpg',  pos: 'center center' },
 ];
 
 /* ── TOAST ── */
@@ -209,20 +350,16 @@ function Ticker() {
 function Hero() {
   return (
     <section id="inicio" className="relative min-h-screen flex flex-col justify-center overflow-hidden noise">
-      {/* BG grid */}
       <div className="absolute inset-0 pointer-events-none" style={{
         backgroundImage:'repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(255,102,0,0.04) 59px,rgba(255,102,0,0.04) 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,rgba(255,102,0,0.04) 59px,rgba(255,102,0,0.04) 60px)'
       }}/>
-      {/* Background image oscura */}
       <img
         src="img lifestyle/Nike P-6000 White 2.jpg"
         className="absolute inset-0 w-full h-full object-cover pointer-events-none"
         style={{opacity:0.25, filter:'grayscale(20%) blur(1px)', objectPosition:'center center'}}
         alt=""
       />
-      {/* Overlay gradiente para que se funda con el fondo */}
       <div className="absolute inset-0 pointer-events-none" style={{background:'linear-gradient(to right, rgba(8,5,2,0.85) 40%, rgba(8,5,2,0.4) 100%)'}}/>
-      {/* Orange glow */}
       <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full pointer-events-none"
            style={{background:'radial-gradient(circle, rgba(255,102,0,0.1) 0%, transparent 70%)'}}/>
 
@@ -230,7 +367,6 @@ function Hero() {
         <p className="fade-up font-mono text-[11px] uppercase tracking-[.45em] text-orange mb-6">
           // Retro Runners Importados · City Bell, ARG
         </p>
-
         <div className="hero-line fade-up">
           <h1 className="section-title leading-none" style={{fontSize:'clamp(64px, 12vw, 160px)', lineHeight:0.88}}>
             RETRO<br/>
@@ -238,21 +374,16 @@ function Hero() {
             STORE.
           </h1>
         </div>
-
         <p className="fade-up-2 section-title mt-6" style={{fontSize:'clamp(20px, 2.5vw, 32px)', color:'#FF6600', letterSpacing:'.04em'}}>
           Vestite cómodo, vestite con estilo.
         </p>
-
         <p className="fade-up-3 font-mono text-gray-500 text-sm leading-loose mt-4 max-w-lg">
           Zapatillas retro runner de los 90s y 2000s. Nike, New Balance, ASICS, Adidas — importadas especialmente para vos.
         </p>
-
         <div className="fade-up-3 flex flex-wrap gap-4 mt-10">
           <a href="#catalogo" className="btn-primary px-10 py-4 text-xl">Ver Catálogo</a>
           <a href="#como-funciona" className="btn-secondary px-10 py-4 text-xl">Cómo Funciona</a>
         </div>
-
-        {/* Stats row */}
         <div className="mt-20 grid grid-cols-3 gap-0 max-w-lg border border-border">
           {[['8+','Modelos'],['37→45','Talles'],['48hs','Respuesta']].map(([n,l]) => (
             <div key={l} className="border-r border-border last:border-0 px-6 py-4 text-center">
@@ -263,7 +394,6 @@ function Hero() {
         </div>
       </div>
 
-      {/* Big BG text */}
       <div className="absolute bottom-0 right-0 pointer-events-none select-none overflow-hidden">
         <p className="font-condensed font-black italic text-right leading-none"
            style={{fontSize:'22vw', color:'rgba(255,102,0,0.04)', letterSpacing:'-0.04em'}}>
@@ -289,123 +419,124 @@ function LifestyleSection() {
           Diseños que resistieron el paso del tiempo. Suelas que saben lo que es el asfalto.
         </p>
       </div>
-
-      {/* Grid 2x2 limpio — todas object-cover, sin bordes negros */}
       <div className="lifestyle-grid" style={{display:'grid', gridTemplateColumns:'1fr 1fr', gridTemplateRows:'520px 520px', gap:'4px'}}>
-
-        {/* 1 — Asics GEL, portrait: se centra en el sujeto */}
         <div style={{overflow:'hidden', position:'relative'}} className="bg-card">
           <img src={LIFESTYLE_IMGS[0].src} alt="lifestyle" className="img-zoom"
-               style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 30%', display:'block'}}/>
+               style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:LIFESTYLE_IMGS[0].pos, display:'block'}}/>
         </div>
-
-        {/* 2 — NB 740 modelo, teal bg: centrado */}
         <div style={{overflow:'hidden', position:'relative'}} className="bg-card">
           <img src={LIFESTYLE_IMGS[1].src} alt="lifestyle" className="img-zoom"
-               style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:'center center', display:'block'}}/>
+               style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:LIFESTYLE_IMGS[1].pos, display:'block'}}/>
         </div>
-
-        {/* 3 — Nike P-6000 manos: centrado en la zapatilla */}
         <div style={{overflow:'hidden', position:'relative'}} className="bg-card">
           <img src={LIFESTYLE_IMGS[2].src} alt="lifestyle" className="img-zoom"
-               style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', display:'block'}}/>
+               style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:LIFESTYLE_IMGS[2].pos, display:'block'}}/>
         </div>
-
-        {/* 4 — NB negras piedras: cuadrada, encaja perfecto */}
         <div style={{overflow:'hidden', position:'relative'}} className="bg-card">
           <img src={LIFESTYLE_IMGS[3].src} alt="lifestyle" className="img-zoom"
-               style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:'center center', display:'block'}}/>
+               style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:LIFESTYLE_IMGS[3].pos, display:'block'}}/>
         </div>
-
       </div>
     </section>
   );
 }
 
-/* ── MODEL CARD ── */
+/* ── MODEL CARD (nueva versión) ── */
 function ModelCard({ model, onClick }) {
+  const firstCw  = model.coverCw
+    ? (model.colorways.find(cw => cw.id === model.coverCw) || model.colorways[0])
+    : model.colorways[0];
+  const firstImg = firstCw.folder + firstCw.images[0];
+  const minPrice = Math.min(...model.colorways.map(cw => cw.price || model.price));
+
   return (
     <div
       onClick={() => onClick(model)}
       className="bg-card border border-border overflow-hidden cursor-pointer group hover:border-orange/50 transition-all duration-300"
-      style={{position:'relative'}}
     >
-      <div className="relative overflow-hidden" style={{aspectRatio:'3/4'}}>
+      {/* Imagen producto */}
+      <div className="relative overflow-hidden bg-card" style={{aspectRatio:'1/1'}}>
         <img
-          src={model.lifestyleImg}
+          src={firstImg}
           alt={`${model.brand} ${model.model}`}
-          className="w-full h-full object-cover img-zoom"
-          onError={e => { e.target.src=`https://via.placeholder.com/400x533/120b05/FF6600?text=${model.brand}`; }}
+          className="w-full h-full img-zoom"
+          style={{objectFit:'contain', padding:'14px'}}
+          onError={e => { e.target.style.objectFit='cover'; e.target.style.padding='0'; }}
         />
-        {/* Gradient overlay bottom */}
-        <div className="absolute inset-0 pointer-events-none" style={{background:'linear-gradient(to top, rgba(8,5,2,0.92) 0%, rgba(8,5,2,0.2) 45%, transparent 100%)'}}/>
-        {/* Brand badge top-left */}
-        <div className="absolute top-3 left-3 bg-bg/80 backdrop-blur-sm px-3 py-1">
-          <span className="font-mono text-[10px] text-orange uppercase tracking-[.3em]">{model.brand}</span>
+        {/* Encargo badge */}
+        <div className="absolute top-2 right-2">
+          <span className="encargo-badge">Encargo</span>
         </div>
-        {/* Encargo badge top-right */}
-        <div className="absolute top-3 right-3">
-          <span className="encargo-badge">Por encargo</span>
-        </div>
-        {/* Color count badge */}
-        <div className="absolute bottom-16 left-4">
-          <span className="font-mono text-[10px] text-gray-400 uppercase tracking-widest">
-            {model.variants.length} {model.variants.length === 1 ? 'color' : 'colores'}
+        {/* Colorway count */}
+        <div className="absolute bottom-2 left-2 bg-bg/85 backdrop-blur-sm px-2 py-0.5">
+          <span className="font-mono text-[9px] text-orange uppercase tracking-widest">
+            {model.colorways.length} colorways
           </span>
-        </div>
-        {/* Model name bottom */}
-        <div className="absolute bottom-0 left-0 right-0 p-4">
-          <h4 className="font-condensed font-black italic uppercase text-3xl leading-none text-white">{model.model}</h4>
-          <p className="font-mono text-[10px] text-gray-400 mt-1 uppercase tracking-widest">
-            desde ${Math.min(...model.variants.map(v => v.price))} USD
-          </p>
         </div>
         {/* Hover overlay */}
         <div className="absolute inset-0 bg-orange/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none flex items-center justify-center">
-          <span className="font-condensed font-black italic text-white text-xl uppercase tracking-widest bg-orange px-6 py-3">
+          <span className="font-condensed font-black italic text-white text-lg uppercase tracking-widest bg-orange px-5 py-2">
             Ver Colores →
           </span>
         </div>
+      </div>
+      {/* Info debajo */}
+      <div className="p-3 border-t border-border">
+        <p className="font-mono text-[9px] text-orange uppercase tracking-[.3em] mb-0.5">{model.brand}</p>
+        <h4 className="font-condensed font-black italic uppercase text-xl leading-tight">{model.model}</h4>
+        <p className="font-mono text-[10px] text-gray-500 mt-0.5">desde ${minPrice} USD</p>
       </div>
     </div>
   );
 }
 
-/* ── MODEL MODAL ── */
+/* ── MODEL MODAL (nueva versión con gallery + colorways) ── */
 function ModelModal({ model, onClose, onAdd }) {
-  const [activeVariant, setActiveVariant] = useState(model.variants[0]);
-  const [selectedSize,  setSelectedSize]  = useState(null);
-  const [sizeError,     setSizeError]     = useState(false);
-  const [added,         setAdded]         = useState(false);
+  const [activeCw,  setActiveCw]  = useState(model.colorways[0]);
+  const [photoIdx,  setPhotoIdx]  = useState(0);
+  const [selSize,   setSelSize]   = useState(null);
+  const [sizeErr,   setSizeErr]   = useState(false);
+  const [added,     setAdded]     = useState(false);
 
-  // Close on ESC
   useEffect(() => {
     const fn = e => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', fn);
     return () => window.removeEventListener('keydown', fn);
   }, [onClose]);
 
-  const handleVariantChange = (v) => {
-    setActiveVariant(v);
-    setSelectedSize(null);
-    setSizeError(false);
+  const changeCw = (cw) => {
+    setActiveCw(cw);
+    setPhotoIdx(0);
+    setSelSize(null);
+    setSizeErr(false);
     setAdded(false);
   };
 
   const handleAdd = () => {
-    if (!selectedSize) { setSizeError(true); setTimeout(() => setSizeError(false), 1800); return; }
-    onAdd({ ...activeVariant, brand: model.brand, model: model.model }, selectedSize);
+    if (!selSize) { setSizeErr(true); setTimeout(() => setSizeErr(false), 1800); return; }
+    const price = activeCw.price || model.price;
+    onAdd({
+      id:    activeCw.id,
+      brand: model.brand,
+      model: model.model,
+      color: activeCw.name,
+      price,
+      img:   activeCw.folder + activeCw.images[0],
+    }, selSize);
     setAdded(true);
-    setTimeout(() => { setAdded(false); setSelectedSize(null); }, 1600);
+    setTimeout(() => { setAdded(false); setSelSize(null); }, 1600);
   };
 
+  const mainImg = activeCw.folder + activeCw.images[photoIdx];
+  const price   = activeCw.price || model.price;
+
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4" style={{backdropFilter:'blur(6px)'}}>
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-2 md:p-4" style={{backdropFilter:'blur(6px)'}}>
       {/* Backdrop */}
       <div className="absolute inset-0 bg-bg/90" onClick={onClose}/>
 
       {/* Modal box */}
-      <div className="relative bg-card border border-border w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col md:flex-row">
+      <div className="relative bg-card border border-border w-full max-w-5xl max-h-[96vh] overflow-hidden flex flex-col md:flex-row" style={{zIndex:1}}>
 
         {/* Close */}
         <button onClick={onClose} className="absolute top-4 right-4 z-10 text-gray-500 hover:text-orange transition-colors p-1">
@@ -414,68 +545,94 @@ function ModelModal({ model, onClose, onAdd }) {
           </svg>
         </button>
 
-        {/* LEFT — product image */}
-        <div className="relative flex-shrink-0 bg-card overflow-hidden flex items-center justify-center" style={{width:'100%', maxWidth:'420px', minHeight:'320px', flex:'1'}}>
-          <img
-            key={activeVariant.id}
-            src={activeVariant.img}
-            alt={`${model.model} ${activeVariant.color}`}
-            className="w-full h-full"
-            style={{objectFit:'contain', objectPosition:'center', minHeight:'320px', maxHeight:'560px', transition:'opacity .3s', padding:'16px'}}
-            onError={e => { e.target.src=`https://via.placeholder.com/420x560/120b05/FF6600?text=${model.model}`; }}
-          />
-          <div className="absolute top-4 left-4 bg-bg/80 backdrop-blur-sm px-3 py-1">
-            <span className="font-mono text-[10px] text-orange uppercase tracking-[.3em]">{model.brand}</span>
+        {/* ─── LEFT: imagen principal + tira de fotos ─── */}
+        <div className="flex flex-col flex-shrink-0" style={{width:'100%', maxWidth:'460px', borderRight:'1px solid #2a1a08'}}>
+          {/* Imagen principal */}
+          <div className="relative flex items-center justify-center bg-card" style={{flex:'1 1 auto', minHeight:'280px', maxHeight:'460px', overflow:'hidden'}}>
+            <img
+              key={mainImg}
+              src={mainImg}
+              alt={`${model.model} ${activeCw.name}`}
+              style={{width:'100%', height:'100%', objectFit:'contain', maxHeight:'460px', padding:'20px', transition:'opacity .2s'}}
+              onError={e => { e.target.src = `https://via.placeholder.com/460x460/120b05/FF6600?text=${encodeURIComponent(model.model)}`; }}
+            />
+            {/* Brand label */}
+            <div className="absolute top-4 left-4 bg-bg/80 backdrop-blur-sm px-3 py-1">
+              <span className="font-mono text-[10px] text-orange uppercase tracking-[.3em]">{model.brand}</span>
+            </div>
+          </div>
+
+          {/* Tira de fotos (gallery) */}
+          <div className="flex gap-2 p-3 border-t border-border overflow-x-auto" style={{flexShrink:0}}>
+            {activeCw.images.map((img, i) => (
+              <button
+                key={i}
+                onClick={() => setPhotoIdx(i)}
+                className={`gallery-thumb flex-shrink-0 border-2 ${photoIdx === i ? 'active border-orange' : 'border-border'}`}
+                style={{width:'58px', height:'58px', overflow:'hidden'}}
+              >
+                <img
+                  src={activeCw.folder + img}
+                  alt=""
+                  style={{width:'100%', height:'100%', objectFit:'cover'}}
+                  onError={e => { e.target.parentElement.style.background='#2a1a08'; }}
+                />
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* RIGHT — info + selector */}
-        <div className="flex flex-col p-6 md:p-8 overflow-y-auto" style={{flex:'1', minWidth:0}}>
-          {/* Header */}
-          <div className="mb-6">
-            <h3 className="font-condensed font-black italic uppercase leading-none" style={{fontSize:'clamp(36px,5vw,52px)'}}>{model.model}</h3>
-            <p className="font-mono text-orange text-xs uppercase tracking-[.3em] mt-1">{activeVariant.color}</p>
+        {/* ─── RIGHT: info + selector de colorways + talle + carrito ─── */}
+        <div className="flex flex-col overflow-y-auto p-5 md:p-6" style={{flex:'1 1 0', minWidth:0}}>
+
+          {/* Encabezado */}
+          <div className="mb-5 pr-8">
+            <p className="font-mono text-[10px] text-orange uppercase tracking-[.35em]">{model.brand}</p>
+            <h3 className="font-condensed font-black italic uppercase leading-none mb-1" style={{fontSize:'clamp(30px,5vw,46px)'}}>
+              {model.model}
+            </h3>
+            <p className="font-mono text-orange text-xs uppercase tracking-[.2em]">{activeCw.name}</p>
           </div>
 
-          {/* Color selector */}
-          <div className="mb-6">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-gray-600 mb-3">Color</p>
-            <div className="flex flex-wrap gap-2">
-              {model.variants.map(v => (
-                <button
-                  key={v.id}
-                  onClick={() => handleVariantChange(v)}
-                  className={`relative overflow-hidden border-2 transition-all duration-200 ${
-                    activeVariant.id === v.id ? 'border-orange' : 'border-border hover:border-gray-500'
-                  }`}
-                  style={{width:'64px', height:'64px'}}
-                  title={v.color}
-                >
-                  <img
-                    src={v.img}
-                    alt={v.color}
-                    className="w-full h-full object-cover"
-                    onError={e => { e.target.parentElement.style.background='#120b05'; }}
-                  />
-                  {activeVariant.id === v.id && (
-                    <div className="absolute inset-0 border-2 border-orange pointer-events-none"/>
-                  )}
-                </button>
-              ))}
+          {/* ─ Selector de colorways ─ */}
+          <div className="mb-5">
+            <div className="flex items-center gap-3 mb-2">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-gray-600">Colorways</p>
+              <span className="font-mono text-[10px] text-orange">{model.colorways.length} opciones</span>
             </div>
-            <p className="font-mono text-[10px] text-gray-600 mt-2 italic">{activeVariant.color}</p>
+            {/* Grid scrolleable si hay muchos colorways */}
+            <div style={{maxHeight:'168px', overflowY:'auto', overflowX:'hidden'}}>
+              <div className="flex flex-wrap gap-1.5 pb-1">
+                {model.colorways.map(cw => (
+                  <button
+                    key={cw.id}
+                    onClick={() => changeCw(cw)}
+                    title={cw.name}
+                    className={`cw-thumb flex-shrink-0 border-2 ${activeCw.id === cw.id ? 'active border-orange' : 'border-border'}`}
+                    style={{width:'50px', height:'50px', overflow:'hidden'}}
+                  >
+                    <img
+                      src={cw.folder + cw.images[0]}
+                      alt={cw.name}
+                      style={{width:'100%', height:'100%', objectFit:'cover'}}
+                      onError={e => { e.target.parentElement.style.background='#2a1a08'; }}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* Size selector */}
-          <div className="mb-6">
-            <p className={`font-mono text-[10px] uppercase tracking-widest mb-3 transition-colors ${sizeError ? 'text-red-400 font-bold' : 'text-gray-600'}`}>
-              {sizeError ? '⚠ Seleccioná un talle' : 'Talle EUR'}
+          {/* ─ Selector de talle ─ */}
+          <div className="mb-5">
+            <p className={`font-mono text-[10px] uppercase tracking-widest mb-3 transition-colors ${sizeErr ? 'text-red-400 font-bold' : 'text-gray-600'}`}>
+              {sizeErr ? '⚠ Seleccioná un talle' : 'Talle EUR'}
             </p>
             <div className="flex flex-wrap gap-2">
-              {activeVariant.sizes.map(s => (
-                <button key={s} onClick={() => setSelectedSize(s)}
+              {model.sizes.map(s => (
+                <button key={s} onClick={() => setSelSize(s)}
                   className={`px-3 py-2 text-xs border font-mono transition-all ${
-                    selectedSize === s
+                    selSize === s
                       ? 'border-orange bg-orange text-bg font-bold'
                       : 'border-border text-gray-500 hover:border-orange/60 hover:text-white'
                   }`}>
@@ -485,18 +642,21 @@ function ModelModal({ model, onClose, onAdd }) {
             </div>
           </div>
 
-          {/* Price + CTA */}
-          <div className="mt-auto border-t border-border pt-6">
-            <div className="flex items-baseline gap-2 mb-4">
-              <span className="font-condensed font-black italic text-4xl">${activeVariant.price}</span>
+          {/* ─ Precio + CTA ─ */}
+          <div className="mt-auto border-t border-border pt-5">
+            <div className="flex items-baseline gap-2 mb-1">
+              <span className="font-condensed font-black italic text-4xl">${price}</span>
               <span className="font-mono text-gray-500 text-sm">USD</span>
               <span className="font-mono text-gray-600 text-xs ml-2">· precio encargo</span>
             </div>
             <p className="font-mono text-[10px] text-gray-600 mb-4">Precio en ARS se cotiza al confirmar el pedido.</p>
-            <button onClick={handleAdd}
-              className={`w-full py-4 text-xl transition-all ${added
-                ? 'bg-green-600 text-white border-2 border-green-600 font-condensed font-black uppercase italic cursor-pointer'
-                : 'btn-primary'}`}>
+            <button
+              onClick={handleAdd}
+              className={`w-full py-4 text-xl transition-all ${
+                added
+                  ? 'bg-green-600 text-white border-2 border-green-600 font-condensed font-black uppercase italic'
+                  : 'btn-primary'
+              }`}>
               {added ? '✓ AGREGADO AL PEDIDO' : '+ AGREGAR AL PEDIDO'}
             </button>
           </div>
@@ -506,45 +666,65 @@ function ModelModal({ model, onClose, onAdd }) {
   );
 }
 
-/* ── CATALOG ── */
+/* ── CATALOG (nuevo con tabs por marca) ── */
 function Catalog({ onAdd }) {
-  const [filter,       setFilter]       = useState('TODOS');
-  const [activeModel,  setActiveModel]  = useState(null);
+  const BRANDS = ['NIKE', 'NEW BALANCE', 'ASICS', 'ADIDAS'];
+  const [activeBrand, setActiveBrand] = useState('NIKE');
+  const [activeModel, setActiveModel] = useState(null);
 
-  const brands   = ['TODOS', ...Array.from(new Set(MODELS.map(m => m.brand)))];
-  const filtered = filter === 'TODOS' ? MODELS : MODELS.filter(m => m.brand === filter);
+  const brandModels = MODELS.filter(m => m.brand === activeBrand);
+
+  // Cuando cambia la marca, cerrar el modal si estaba abierto
+  const handleBrandChange = (brand) => {
+    setActiveBrand(brand);
+    setActiveModel(null);
+  };
 
   return (
     <section id="catalogo" className="py-20 max-w-7xl mx-auto px-6">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
-        <div>
-          <p className="font-mono text-orange text-xs tracking-[.45em] uppercase mb-3">// Catálogo completo</p>
-          <h2 className="section-title text-6xl md:text-8xl border-l-8 border-orange pl-6 leading-none">
-            PEDIDOS_<br/>POR_ENCARGO
-          </h2>
-          <p className="font-mono text-gray-500 text-xs mt-4 max-w-md leading-relaxed">
-            Clickeá un modelo para ver todos los colores y talles disponibles.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {brands.map(b => (
-            <button key={b} onClick={() => setFilter(b)}
-              className={`font-mono text-xs uppercase tracking-widest px-4 py-2 border transition-all ${
-                filter === b
-                  ? 'bg-orange text-bg border-orange font-bold'
-                  : 'border-border text-gray-500 hover:border-orange/50 hover:text-white'
-              }`}>
-              {b}
-            </button>
-          ))}
-        </div>
+
+      {/* Header sección */}
+      <div className="mb-10">
+        <p className="font-mono text-orange text-xs tracking-[.45em] uppercase mb-3">// Catálogo completo</p>
+        <h2 className="section-title text-6xl md:text-8xl border-l-8 border-orange pl-6 leading-none">
+          PEDIDOS_<br/>POR_ENCARGO
+        </h2>
+        <p className="font-mono text-gray-500 text-xs mt-4 max-w-md leading-relaxed">
+          Elegí la marca → el modelo → el colorway, seleccioná tu talle y agregá al pedido.
+        </p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {filtered.map(m => <ModelCard key={m.id} model={m} onClick={setActiveModel}/>)}
+      {/* Brand tabs */}
+      <div className="flex border-b border-border mb-8 overflow-x-auto" style={{scrollbarWidth:'none'}}>
+        {BRANDS.map(b => (
+          <button
+            key={b}
+            onClick={() => handleBrandChange(b)}
+            className={`brand-tab px-6 md:px-10 py-4 font-condensed font-black italic uppercase text-xl whitespace-nowrap flex-shrink-0 ${activeBrand === b ? 'active' : 'text-gray-500'}`}
+          >
+            {b}
+          </button>
+        ))}
       </div>
 
-      <div className="mt-10 border border-orange/30 p-6 flex flex-col md:flex-row items-center gap-4">
+      {/* Brand description line */}
+      <div className="flex items-center gap-4 mb-8">
+        <div className="h-px flex-1 bg-border"/>
+        <span className="font-mono text-[10px] uppercase tracking-[.4em] text-gray-600">
+          {brandModels.length} {brandModels.length === 1 ? 'modelo' : 'modelos'} disponibles
+        </span>
+        <div className="h-px flex-1 bg-border"/>
+      </div>
+
+      {/* Model grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-12">
+        {brandModels.map(m => (
+          <ModelCard key={m.id} model={m} onClick={setActiveModel}/>
+        ))}
+      </div>
+
+      {/* Footer "no encontrás" */}
+      <div className="border border-orange/30 p-6 flex flex-col md:flex-row items-center gap-4">
         <div className="text-orange text-3xl">🔍</div>
         <div>
           <p className="font-condensed font-black italic text-xl">¿No encontrás lo que buscás?</p>
@@ -568,10 +748,10 @@ function Catalog({ onAdd }) {
 /* ── COMO FUNCIONA ── */
 function ComoFunciona() {
   const steps = [
-    { n:'01', title:'Elegís el modelo',   desc:'Buscá en el catálogo, seleccioná el modelo y el talle que querés.' },
-    { n:'02', title:'Nos contactamos',    desc:'Te escribimos por WhatsApp para confirmar precio en ARS y disponibilidad.' },
-    { n:'03', title:'Coordinamos el pago',desc:'Aceptamos transferencia, MercadoPago o efectivo según lo que prefieran.' },
-    { n:'04', title:'Llega a tu puerta',  desc:'Importamos el par especialmente para vos. Envío a todo el país en 15–20 días.' },
+    { n:'01', title:'Elegís el modelo',    desc:'Navegá el catálogo por marca, seleccioná el modelo y el colorway que querés.' },
+    { n:'02', title:'Nos contactamos',     desc:'Te escribimos por WhatsApp para confirmar precio en ARS y disponibilidad.' },
+    { n:'03', title:'Coordinamos el pago', desc:'Aceptamos transferencia, MercadoPago o efectivo según lo que prefieran.' },
+    { n:'04', title:'Llega a tu puerta',   desc:'Importamos el par especialmente para vos. Envío a todo el país en 15–20 días.' },
   ];
   return (
     <section id="como-funciona" className="py-20 border-t border-border">
@@ -632,7 +812,8 @@ function CartSidebar({ cart, isOpen, onClose, onRemove, onQtyChange, onCheckout 
             </div>
           ) : cart.map(item => (
             <div key={`${item.id}-${item.size}`} className="flex gap-4 border border-border p-3 bg-card hover:border-orange/30 transition-colors">
-              <img src={item.img} alt={item.model} className="w-20 h-20 object-cover border border-border flex-shrink-0"
+              <img src={item.img} alt={item.model} className="w-20 h-20 border border-border flex-shrink-0"
+                   style={{objectFit:'contain', background:'#120b05'}}
                    onError={e => { e.target.src='https://via.placeholder.com/80x80/120b05/FF6600?text=GG'; }}/>
               <div className="flex-grow min-w-0">
                 <p className="font-mono text-[10px] text-orange uppercase tracking-widest">{item.brand}</p>
@@ -674,10 +855,10 @@ function CartSidebar({ cart, isOpen, onClose, onRemove, onQtyChange, onCheckout 
 /* ── CHECKOUT MODAL ── */
 function CheckoutModal({ cart, onClose }) {
   const total = cart.reduce((acc, i) => acc + i.price * i.qty, 0);
-  const [step,    setStep]    = useState(1); // 1=form, 2=loading, 3=success, 4=error
-  const [form,    setForm]    = useState({ name:'', email:'', phone:'', province:'', address:'' });
-  const [waLink,  setWaLink]  = useState('');
-  const [errMsg,  setErrMsg]  = useState('');
+  const [step,   setStep]   = useState(1);
+  const [form,   setForm]   = useState({ name:'', email:'', phone:'', province:'', address:'' });
+  const [waLink, setWaLink] = useState('');
+  const [errMsg, setErrMsg] = useState('');
 
   const fields = [
     { key:'name',     label:'Nombre completo',    type:'text' },
@@ -689,47 +870,25 @@ function CheckoutModal({ cart, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setStep(2); // loading
-
-    // Armar los items para el backend
+    setStep(2);
     const items = cart.flatMap(item =>
       Array.from({ length: item.qty }, () => ({
-        brand: item.brand,
-        model: item.model,
-        color: item.color,
-        size:  item.size,
-        price: item.price,
+        brand: item.brand, model: item.model,
+        color: item.color, size: item.size, price: item.price,
       }))
     );
-
-    const cliente = {
-      nombre:    form.name,
-      email:     form.email,
-      telefono:  form.phone,
-      provincia: form.province,
-      direccion: form.address,
-    };
-
+    const cliente = { nombre:form.name, email:form.email, telefono:form.phone, provincia:form.province, direccion:form.address };
     try {
       const res  = await fetch('http://localhost:3001/api/pedido', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ items, cliente }),
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ items, cliente }),
       });
       const data = await res.json();
-
-      if (data.ok) {
-        setWaLink(data.whatsappUrl);
-        setStep(3); // success
-        // Abrir WhatsApp automáticamente
-        window.open(data.whatsappUrl, '_blank');
-      } else {
-        setErrMsg(data.error || 'Error al procesar el pedido.');
-        setStep(4); // error
-      }
+      if (data.ok) { setWaLink(data.whatsappUrl); setStep(3); window.open(data.whatsappUrl,'_blank'); }
+      else { setErrMsg(data.error || 'Error al procesar el pedido.'); setStep(4); }
     } catch (err) {
       setErrMsg('No se pudo conectar con el servidor. Asegurate de que el backend esté corriendo.');
-      setStep(4); // error
+      setStep(4);
     }
   };
 
@@ -739,10 +898,7 @@ function CheckoutModal({ cart, onClose }) {
       <div className="relative bg-card border border-border w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-border">
           <h3 className="font-condensed font-black italic text-2xl uppercase">
-            {step === 1 && 'Datos del Encargo'}
-            {step === 2 && 'Procesando...'}
-            {step === 3 && '¡Pedido Confirmado!'}
-            {step === 4 && 'Algo salió mal'}
+            {step===1 && 'Datos del Encargo'}{step===2 && 'Procesando...'}{step===3 && '¡Pedido Confirmado!'}{step===4 && 'Algo salió mal'}
           </h3>
           {step !== 2 && (
             <button onClick={onClose} className="text-gray-500 hover:text-orange transition-colors">
@@ -753,8 +909,7 @@ function CheckoutModal({ cart, onClose }) {
           )}
         </div>
 
-        {/* PASO 1 — Formulario */}
-        {step === 1 && (
+        {step===1 && (
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             {fields.map(f => (
               <input key={f.key} type={f.type} placeholder={f.label} required
@@ -765,8 +920,8 @@ function CheckoutModal({ cart, onClose }) {
               <p className="font-mono text-[10px] text-orange uppercase tracking-widest mb-3">Detalle del pedido</p>
               {cart.map(item => (
                 <div key={`${item.id}-${item.size}`} className="flex justify-between font-mono text-xs text-gray-400 py-1 border-b border-border last:border-0">
-                  <span>{item.brand} {item.model} T.{item.size} x{item.qty}</span>
-                  <span>${item.price * item.qty} USD</span>
+                  <span>{item.brand} {item.model} · {item.color} · T.{item.size} x{item.qty}</span>
+                  <span>${item.price * item.qty}</span>
                 </div>
               ))}
               <div className="flex justify-between mt-3 font-condensed font-black italic text-2xl">
@@ -778,18 +933,15 @@ function CheckoutModal({ cart, onClose }) {
           </form>
         )}
 
-        {/* PASO 2 — Loading */}
-        {step === 2 && (
+        {step===2 && (
           <div className="p-16 text-center">
             <div className="inline-block w-10 h-10 border-4 border-border border-t-orange rounded-full mb-6"
                  style={{animation:'spin 1s linear infinite'}}/>
             <p className="font-condensed font-black italic text-xl uppercase text-gray-400">Enviando pedido...</p>
-            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
           </div>
         )}
 
-        {/* PASO 3 — Éxito */}
-        {step === 3 && (
+        {step===3 && (
           <div className="p-10 text-center">
             <p className="font-condensed font-black italic text-6xl text-orange mb-4">🔥</p>
             <h4 className="section-title text-3xl mb-4">ENCARGO RECIBIDO</h4>
@@ -799,15 +951,12 @@ function CheckoutModal({ cart, onClose }) {
             <p className="font-mono text-xs text-gray-600 mb-6">
               Ref: <span className="text-orange font-bold">${total} USD</span> · <span className="text-white">{form.email}</span>
             </p>
-            <a href={waLink} target="_blank" rel="noopener noreferrer" className="btn-primary px-8 py-3 text-lg mb-3 w-full">
-              Abrir WhatsApp
-            </a>
+            <a href={waLink} target="_blank" rel="noopener noreferrer" className="btn-primary px-8 py-3 text-lg mb-3 w-full">Abrir WhatsApp</a>
             <button onClick={onClose} className="btn-secondary w-full py-3 text-sm mt-2">Volver al Catálogo</button>
           </div>
         )}
 
-        {/* PASO 4 — Error */}
-        {step === 4 && (
+        {step===4 && (
           <div className="p-10 text-center">
             <p className="font-condensed font-black italic text-5xl text-red-500 mb-4">!</p>
             <h4 className="section-title text-2xl mb-4 text-red-400">ERROR</h4>
@@ -873,7 +1022,7 @@ function App() {
       if (exists) return prev.map(i => i.id === product.id && i.size === size ? {...i, qty:i.qty+1} : i);
       return [...prev, {...product, size, qty:1}];
     });
-    setToast(`${product.brand} ${product.model} T.${size}`);
+    setToast(`${product.brand} ${product.model} — ${product.color} T.${size}`);
   }, []);
 
   const handleRemove = useCallback((item) => {
