@@ -2,18 +2,21 @@ require('dotenv').config();
 const express    = require('express');
 const nodemailer = require('nodemailer');
 const cors       = require('cors');
-const Database   = require('better-sqlite3');
-const path       = require('path');
+const { Pool }   = require('pg');
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
 
-// ── Base de datos SQLite ─────────────────────────────────────
-const db = new Database(path.join(__dirname, 'pedidos.db'));
+// ── Base de datos PostgreSQL ─────────────────────────────────
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+});
 
-db.exec(`
+// Crear tabla si no existe
+pool.query(`
   CREATE TABLE IF NOT EXISTS pedidos (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    id          SERIAL PRIMARY KEY,
     fecha       TEXT    NOT NULL,
     nombre      TEXT    NOT NULL,
     email       TEXT    NOT NULL,
@@ -26,7 +29,11 @@ db.exec(`
     tracking    TEXT,
     notas       TEXT
   )
-`);
+`).then(() => {
+  console.log('✅ Tabla pedidos lista');
+}).catch(err => {
+  console.error('Error al crear tabla:', err.message);
+});
 
 // ── Middlewares ──────────────────────────────────────────────
 app.use(cors({ origin: '*' }));
@@ -100,41 +107,42 @@ app.post('/api/pedido', async (req, res) => {
 
   try {
     // 1 — Guardar en base de datos
-    const insert = db.prepare(`
-      INSERT INTO pedidos (fecha, nombre, email, telefono, provincia, direccion, productos, total_usd)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    const result = insert.run(
-      new Date().toISOString(),
-      cliente.nombre,
-      cliente.email,
-      cliente.telefono  || '',
-      cliente.provincia || '',
-      cliente.direccion || '',
-      JSON.stringify(items),
-      total
+    const result = await pool.query(
+      `INSERT INTO pedidos (fecha, nombre, email, telefono, provincia, direccion, productos, total_usd)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+      [
+        new Date().toISOString(),
+        cliente.nombre,
+        cliente.email,
+        cliente.telefono  || '',
+        cliente.provincia || '',
+        cliente.direccion || '',
+        JSON.stringify(items),
+        total,
+      ]
     );
+    const pedidoId = result.rows[0].id;
 
     // 2 — Email a la tienda
     await transporter.sendMail({
       from   : `"GG'SNK Pedidos" <${process.env.GMAIL_USER}>`,
       to     : process.env.EMAIL_DESTINO,
-      subject: `🛒 Nuevo pedido #${result.lastInsertRowid} — ${cliente.nombre}`,
-      text   : `Pedido #${result.lastInsertRowid}\n` + formatearPedidoEmail(items, cliente),
+      subject: `🛒 Nuevo pedido #${pedidoId} — ${cliente.nombre}`,
+      text   : `Pedido #${pedidoId}\n` + formatearPedidoEmail(items, cliente),
     });
 
     // 3 — Email al cliente
     await transporter.sendMail({
       from   : `"GG'SNK" <${process.env.GMAIL_USER}>`,
       to     : cliente.email,
-      subject: `✅ Recibimos tu pedido #${result.lastInsertRowid} — GG'SNK`,
+      subject: `✅ Recibimos tu pedido #${pedidoId} — GG'SNK`,
       text   : `Hola ${cliente.nombre}!\n\nRecibimos tu pedido y te escribimos en las próximas horas para coordinar el pago.\n\n${formatearPedidoEmail(items, cliente)}\n\n— El equipo de GG'SNK`,
     });
 
     // 4 — Link WhatsApp
     const waLink = `https://wa.me/${process.env.WHATSAPP_NUMERO}?text=${formatearMensajeWhatsApp(items, cliente)}`;
 
-    res.json({ ok: true, whatsappUrl: waLink, pedidoId: result.lastInsertRowid });
+    res.json({ ok: true, whatsappUrl: waLink, pedidoId });
 
   } catch (err) {
     console.error('Error al procesar pedido:', err.message);
@@ -143,49 +151,76 @@ app.post('/api/pedido', async (req, res) => {
 });
 
 // ── GET /api/pedidos — listar todos ─────────────────────────
-app.get('/api/pedidos', (req, res) => {
-  const { estado } = req.query;
-  let pedidos;
-  if (estado && estado !== 'TODOS') {
-    pedidos = db.prepare('SELECT * FROM pedidos WHERE estado = ? ORDER BY id DESC').all(estado);
-  } else {
-    pedidos = db.prepare('SELECT * FROM pedidos ORDER BY id DESC').all();
+app.get('/api/pedidos', async (req, res) => {
+  try {
+    const { estado } = req.query;
+    let result;
+    if (estado && estado !== 'TODOS') {
+      result = await pool.query('SELECT * FROM pedidos WHERE estado = $1 ORDER BY id DESC', [estado]);
+    } else {
+      result = await pool.query('SELECT * FROM pedidos ORDER BY id DESC');
+    }
+    const pedidos = result.rows.map(p => ({ ...p, productos: JSON.parse(p.productos) }));
+    res.json({ ok: true, pedidos });
+  } catch (err) {
+    console.error('Error al obtener pedidos:', err.message);
+    res.status(500).json({ ok: false, error: 'No se pudo obtener los pedidos.' });
   }
-  // Parsear productos de JSON a objeto
-  pedidos = pedidos.map(p => ({ ...p, productos: JSON.parse(p.productos) }));
-  res.json({ ok: true, pedidos });
 });
 
 // ── PUT /api/pedido/:id — actualizar estado y tracking ──────
-app.put('/api/pedido/:id', (req, res) => {
-  const { id }              = req.params;
+app.put('/api/pedido/:id', async (req, res) => {
+  const { id }                      = req.params;
   const { estado, tracking, notas } = req.body;
 
-  const pedido = db.prepare('SELECT * FROM pedidos WHERE id = ?').get(id);
-  if (!pedido) return res.status(404).json({ ok: false, error: 'Pedido no encontrado.' });
+  try {
+    const check = await pool.query('SELECT id FROM pedidos WHERE id = $1', [id]);
+    if (check.rows.length === 0)
+      return res.status(404).json({ ok: false, error: 'Pedido no encontrado.' });
 
-  db.prepare(`
-    UPDATE pedidos SET
-      estado   = COALESCE(?, estado),
-      tracking = COALESCE(?, tracking),
-      notas    = COALESCE(?, notas)
-    WHERE id = ?
-  `).run(estado || null, tracking || null, notas || null, id);
-
-  res.json({ ok: true });
+    await pool.query(
+      `UPDATE pedidos SET
+        estado   = COALESCE($1, estado),
+        tracking = COALESCE($2, tracking),
+        notas    = COALESCE($3, notas)
+       WHERE id = $4`,
+      [estado || null, tracking || null, notas || null, id]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Error al actualizar pedido:', err.message);
+    res.status(500).json({ ok: false, error: 'No se pudo actualizar el pedido.' });
+  }
 });
 
 // ── GET /api/stats — estadísticas para el panel ─────────────
-app.get('/api/stats', (req, res) => {
-  const total     = db.prepare('SELECT COUNT(*) as n FROM pedidos').get().n;
-  const pendiente = db.prepare("SELECT COUNT(*) as n FROM pedidos WHERE estado = 'Pendiente de pago'").get().n;
-  const pagado    = db.prepare("SELECT COUNT(*) as n FROM pedidos WHERE estado = 'Pagado'").get().n;
-  const encargado = db.prepare("SELECT COUNT(*) as n FROM pedidos WHERE estado = 'Encargo realizado'").get().n;
-  const camino    = db.prepare("SELECT COUNT(*) as n FROM pedidos WHERE estado = 'En camino'").get().n;
-  const entregado = db.prepare("SELECT COUNT(*) as n FROM pedidos WHERE estado = 'Entregado'").get().n;
-  const ingresos  = db.prepare("SELECT SUM(total_usd) as s FROM pedidos WHERE estado != 'Pendiente de pago'").get().s || 0;
+app.get('/api/stats', async (req, res) => {
+  try {
+    const q = (sql, params = []) => pool.query(sql, params).then(r => r.rows[0]);
 
-  res.json({ ok: true, stats: { total, pendiente, pagado, encargado, camino, entregado, ingresos } });
+    const [total, pendiente, pagado, encargado, camino, entregado, ingresos] = await Promise.all([
+      q('SELECT COUNT(*)::int AS n FROM pedidos'),
+      q("SELECT COUNT(*)::int AS n FROM pedidos WHERE estado = 'Pendiente de pago'"),
+      q("SELECT COUNT(*)::int AS n FROM pedidos WHERE estado = 'Pagado'"),
+      q("SELECT COUNT(*)::int AS n FROM pedidos WHERE estado = 'Encargo realizado'"),
+      q("SELECT COUNT(*)::int AS n FROM pedidos WHERE estado = 'En camino'"),
+      q("SELECT COUNT(*)::int AS n FROM pedidos WHERE estado = 'Entregado'"),
+      q("SELECT COALESCE(SUM(total_usd), 0) AS s FROM pedidos WHERE estado != 'Pendiente de pago'"),
+    ]);
+
+    res.json({ ok: true, stats: {
+      total:     total.n,
+      pendiente: pendiente.n,
+      pagado:    pagado.n,
+      encargado: encargado.n,
+      camino:    camino.n,
+      entregado: entregado.n,
+      ingresos:  parseFloat(ingresos.s),
+    }});
+  } catch (err) {
+    console.error('Error al obtener stats:', err.message);
+    res.status(500).json({ ok: false, error: 'No se pudo obtener las estadísticas.' });
+  }
 });
 
 // ── Health check ─────────────────────────────────────────────
