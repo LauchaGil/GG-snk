@@ -134,14 +134,14 @@ app.post('/api/pedido', async (req, res) => {
 
     // 4 — Emails en segundo plano (no bloquean la respuesta)
     resend.emails.send({
-      from   : `GG'SNK Pedidos <onboarding@resend.dev>`,
+      from   : `GG'SNK Pedidos <pedidos@ggsnk.store>`,
       to     : process.env.EMAIL_DESTINO,
       subject: `Nuevo pedido #${pedidoId} — ${cliente.nombre}`,
       text   : `Pedido #${pedidoId}\n` + formatearPedidoEmail(items, cliente),
     }).catch(err => console.error('Error email tienda:', err.message));
 
     resend.emails.send({
-      from   : `GG'SNK <onboarding@resend.dev>`,
+      from   : `GG'SNK <pedidos@ggsnk.store>`,
       to     : cliente.email,
       subject: `Recibimos tu pedido #${pedidoId} — GG'SNK`,
       text   : `Hola ${cliente.nombre}!\n\nRecibimos tu pedido y te escribimos en las próximas horas para coordinar el pago.\n\n${formatearPedidoEmail(items, cliente)}\n\n— El equipo de GG'SNK`,
