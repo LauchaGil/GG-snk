@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express    = require('express');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const cors       = require('cors');
 const { Pool }   = require('pg');
 
@@ -39,14 +39,8 @@ pool.query(`
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-// ── Nodemailer (Gmail) ───────────────────────────────────────
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_PASS,
-  },
-});
+// ── Resend (email API) ───────────────────────────────────────
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ── Helpers ──────────────────────────────────────────────────
 function formatearPedidoEmail(items, cliente) {
@@ -139,17 +133,17 @@ app.post('/api/pedido', async (req, res) => {
     res.json({ ok: true, whatsappUrl: waLink, pedidoId });
 
     // 4 — Emails en segundo plano (no bloquean la respuesta)
-    transporter.sendMail({
-      from   : `"GG'SNK Pedidos" <${process.env.GMAIL_USER}>`,
+    resend.emails.send({
+      from   : `GG'SNK Pedidos <onboarding@resend.dev>`,
       to     : process.env.EMAIL_DESTINO,
-      subject: `🛒 Nuevo pedido #${pedidoId} — ${cliente.nombre}`,
+      subject: `Nuevo pedido #${pedidoId} — ${cliente.nombre}`,
       text   : `Pedido #${pedidoId}\n` + formatearPedidoEmail(items, cliente),
     }).catch(err => console.error('Error email tienda:', err.message));
 
-    transporter.sendMail({
-      from   : `"GG'SNK" <${process.env.GMAIL_USER}>`,
+    resend.emails.send({
+      from   : `GG'SNK <onboarding@resend.dev>`,
       to     : cliente.email,
-      subject: `✅ Recibimos tu pedido #${pedidoId} — GG'SNK`,
+      subject: `Recibimos tu pedido #${pedidoId} — GG'SNK`,
       text   : `Hola ${cliente.nombre}!\n\nRecibimos tu pedido y te escribimos en las próximas horas para coordinar el pago.\n\n${formatearPedidoEmail(items, cliente)}\n\n— El equipo de GG'SNK`,
     }).catch(err => console.error('Error email cliente:', err.message));
 
