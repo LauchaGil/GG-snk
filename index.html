@@ -117,6 +117,14 @@
 <script type="text/babel">
 const { useState, useEffect, useCallback, useRef } = React;
 
+const sortColorways = (cws) => [...cws].sort((a, b) => {
+  const aB = a.name.toLowerCase().startsWith('black') || a.name.toLowerCase() === 'black';
+  const bB = b.name.toLowerCase().startsWith('black') || b.name.toLowerCase() === 'black';
+  if (aB && !bB) return -1;
+  if (!aB && bB) return 1;
+  return 0;
+});
+
 const CAT  = 'img catalogo/';
 const LIFE = 'img lifestyle/';
 
@@ -520,7 +528,8 @@ function ModelCard({ model, onClick }) {
 
 /* ── MODEL MODAL (nueva versión con gallery + colorways) ── */
 function ModelModal({ model, onClose, onAdd }) {
-  const [activeCw,  setActiveCw]  = useState(model.colorways[0]);
+  const sortedCws = sortColorways(model.colorways);
+  const [activeCw,  setActiveCw]  = useState(sortedCws[0]);
   const [photoIdx,  setPhotoIdx]  = useState(0);
   const [selSize,   setSelSize]   = useState(null);
   const [sizeErr,   setSizeErr]   = useState(false);
@@ -632,7 +641,7 @@ function ModelModal({ model, onClose, onAdd }) {
             {/* Grid scrolleable si hay muchos colorways */}
             <div style={{maxHeight:'168px', overflowY:'auto', overflowX:'hidden'}}>
               <div className="flex flex-wrap gap-1.5 pb-1">
-                {model.colorways.map(cw => (
+                {sortedCws.map(cw => (
                   <button
                     key={cw.id}
                     onClick={() => changeCw(cw)}
