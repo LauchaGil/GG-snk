@@ -423,8 +423,8 @@ function Hero() {
           <a href="#catalogo" className="btn-primary px-10 py-4 text-xl">Ver Catálogo</a>
           <a href="#como-funciona" className="btn-secondary px-10 py-4 text-xl">Cómo Funciona</a>
         </div>
-        <div className="mt-20 grid grid-cols-3 gap-0 max-w-lg border border-border">
-          {[['8+','Modelos'],['37→45','Talles'],['48hs','Respuesta']].map(([n,l]) => (
+        <div className="mt-20 grid grid-cols-2 gap-0 max-w-sm border border-border">
+          {[['8+','Modelos'],['37→45','Talles']].map(([n,l]) => (
             <div key={l} className="border-r border-border last:border-0 px-6 py-4 text-center">
               <p className="font-condensed font-black italic text-3xl text-orange">{n}</p>
               <p className="font-mono text-[10px] uppercase tracking-widest text-gray-600 mt-1">{l}</p>
@@ -813,7 +813,6 @@ function ComoFunciona() {
         <div className="mt-8 flex flex-col md:flex-row gap-4 items-center justify-between border border-border p-8">
           <div>
             <p className="font-condensed font-black italic text-2xl">¿Listo para encargar?</p>
-            <p className="font-mono text-gray-500 text-xs mt-1">Respondemos en menos de 48 horas.</p>
           </div>
           <div className="flex gap-3 flex-wrap">
             <a href="#catalogo" className="btn-primary px-8 py-3 text-lg">Ver Modelos</a>
