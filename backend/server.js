@@ -177,7 +177,7 @@ function formatearMensajeWhatsApp(items, cliente) {
     `👟 *${item.brand} ${item.model}*\n` +
     `   • Color: ${item.color}\n` +
     `   • Talle: ${item.size} EUR\n` +
-    `   • Precio: $${item.price} USD`
+    `   • Precio: $${Number(item.price).toLocaleString('es-AR')} ARS`
   ).join('\n\n');
 
   const total = items.reduce((sum, i) => sum + i.price, 0);
@@ -191,7 +191,7 @@ function formatearMensajeWhatsApp(items, cliente) {
     `\u{1F4E6} *Productos*\n\n` +
     `${lineas}\n\n` +
     `--------------------\n` +
-    `\u{1F4B5} *TOTAL: $${total} USD*\n` +
+    `\u{1F4B5} *TOTAL: $${Number(total).toLocaleString('es-AR')} ARS*\n` +
     `--------------------\n\n` +
     `Quedo a la espera para coordinar el pago \u{1F91D}`
   );
