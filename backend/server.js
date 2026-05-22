@@ -3,6 +3,18 @@ const express    = require('express');
 const { Resend } = require('resend');
 const cors       = require('cors');
 const { Pool }   = require('pg');
+const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
+
+// ── Mercado Pago ─────────────────────────────────────────────
+const mpClient = new MercadoPagoConfig({
+  accessToken: process.env.MP_ACCESS_TOKEN || '',
+});
+const mpPreference = new Preference(mpClient);
+const mpPayment    = new Payment(mpClient);
+
+const TIPO_CAMBIO  = parseFloat(process.env.TIPO_CAMBIO_ARS  || '1200'); // 1 USD en ARS
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://ggsnk.store';
+const BACKEND_URL  = process.env.BACKEND_URL  || 'https://ggsnk-backend.onrender.com';
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -214,13 +226,47 @@ app.post('/api/pedido', async (req, res) => {
     );
     const pedidoId = result.rows[0].id;
 
-    // 2 — Link WhatsApp
+    // 2 — Link WhatsApp (siempre disponible como fallback)
     const waLink = `https://wa.me/${process.env.WHATSAPP_NUMERO}?text=${formatearMensajeWhatsApp(items, cliente)}`;
 
-    // 3 — Responder inmediatamente (no esperamos los emails)
-    res.json({ ok: true, whatsappUrl: waLink, pedidoId });
+    // 3 — Crear preferencia de Mercado Pago (si está configurado)
+    let initPoint = null;
+    if (process.env.MP_ACCESS_TOKEN) {
+      try {
+        const mpItems = items.map(item => ({
+          id          : item.model?.replace(/\s+/g, '-').toLowerCase() || 'zapatilla',
+          title       : `${item.brand} ${item.model} — ${item.color} (T.${item.size})`,
+          quantity    : 1,
+          unit_price  : Math.round(item.price * TIPO_CAMBIO),
+          currency_id : 'ARS',
+        }));
+        const prefData = await mpPreference.create({
+          body: {
+            items,
+            payer       : { name: cliente.nombre, email: cliente.email },
+            back_urls   : {
+              success : `${FRONTEND_URL}?pago=exitoso&ref=${pedidoId}`,
+              failure : `${FRONTEND_URL}?pago=fallido&ref=${pedidoId}`,
+              pending : `${FRONTEND_URL}?pago=pendiente&ref=${pedidoId}`,
+            },
+            auto_return          : 'approved',
+            notification_url     : `${BACKEND_URL}/api/webhook/mercadopago`,
+            external_reference   : String(pedidoId),
+            statement_descriptor : 'GGSNK',
+            items                : mpItems,
+          },
+        });
+        initPoint = prefData.init_point;
+      } catch (mpErr) {
+        console.error('Error al crear preferencia MP:', mpErr.message);
+        // Si falla MP no rompemos el flujo, el usuario puede usar WhatsApp
+      }
+    }
 
-    // 4 — Emails en segundo plano (no bloquean la respuesta)
+    // 4 — Responder inmediatamente (no esperamos los emails)
+    res.json({ ok: true, whatsappUrl: waLink, pedidoId, initPoint });
+
+    // 5 — Emails en segundo plano (no bloquean la respuesta)
     resend.emails.send({
       from   : `GG'SNK Pedidos <pedidos@ggsnk.store>`,
       to     : process.env.EMAIL_DESTINO,
@@ -311,6 +357,62 @@ app.get('/api/stats', async (req, res) => {
   } catch (err) {
     console.error('Error al obtener stats:', err.message);
     res.status(500).json({ ok: false, error: 'No se pudo obtener las estadísticas.' });
+  }
+});
+
+// ── POST /api/webhook/mercadopago — notificaciones de pago ──
+app.post('/api/webhook/mercadopago', async (req, res) => {
+  // MP requiere respuesta 200 inmediata para no reintentar
+  res.status(200).send('OK');
+
+  const { type, data } = req.body;
+  if (type !== 'payment' || !data?.id) return;
+
+  try {
+    const paymentData = await mpPayment.get({ id: data.id });
+    if (paymentData.status !== 'approved') return;
+
+    const pedidoId = parseInt(paymentData.external_reference);
+    if (!pedidoId) return;
+
+    // Marcar pedido como pagado
+    await pool.query(
+      `UPDATE pedidos SET estado = 'Pagado' WHERE id = $1 AND estado = 'Pendiente de pago'`,
+      [pedidoId]
+    );
+    console.log(`✅ Pago aprobado — Pedido #${pedidoId}`);
+
+    // Obtener datos del pedido para enviar emails
+    const result = await pool.query('SELECT * FROM pedidos WHERE id = $1', [pedidoId]);
+    if (result.rows.length === 0) return;
+
+    const p     = result.rows[0];
+    const items = JSON.parse(p.productos);
+    const cliente = {
+      nombre   : p.nombre,
+      email    : p.email,
+      telefono : p.telefono,
+      provincia: p.provincia,
+      direccion: p.direccion,
+    };
+
+    // Emails de confirmación de pago
+    resend.emails.send({
+      from   : `GG'SNK Pedidos <pedidos@ggsnk.store>`,
+      to     : process.env.EMAIL_DESTINO,
+      subject: `💸 Pago confirmado — Pedido #${pedidoId} (${cliente.nombre})`,
+      html   : htmlEmailTienda(items, cliente, pedidoId),
+    }).catch(err => console.error('Error email tienda (webhook):', err.message));
+
+    resend.emails.send({
+      from   : `GG'SNK <pedidos@ggsnk.store>`,
+      to     : cliente.email,
+      subject: `✅ Pago recibido — Pedido #${pedidoId} — GG'SNK`,
+      html   : htmlEmailCliente(items, cliente, pedidoId),
+    }).catch(err => console.error('Error email cliente (webhook):', err.message));
+
+  } catch (err) {
+    console.error('Error en webhook MP:', err.message);
   }
 });
 

@@ -893,11 +893,12 @@ function CartSidebar({ cart, isOpen, onClose, onRemove, onQtyChange, onCheckout 
 /* ── CHECKOUT MODAL ── */
 function CheckoutModal({ cart, onClose }) {
   const total = cart.reduce((acc, i) => acc + i.price * i.qty, 0);
-  const [step,     setStep]     = useState(1);
-  const [form,     setForm]     = useState({ name:'', email:'', phone:'', province:'', address:'' });
-  const [waLink,   setWaLink]   = useState('');
-  const [errMsg,   setErrMsg]   = useState('');
-  const [phoneErr, setPhoneErr] = useState('');
+  const [step,       setStep]       = useState(1);
+  const [form,       setForm]       = useState({ name:'', email:'', phone:'', province:'', address:'' });
+  const [waLink,     setWaLink]     = useState('');
+  const [initPoint,  setInitPoint]  = useState('');
+  const [errMsg,     setErrMsg]     = useState('');
+  const [phoneErr,   setPhoneErr]   = useState('');
 
   // Valida formato WhatsApp Argentina: +54 9 [área] [número]
   // Ejemplos válidos: +5492214123456 / +54 9 221 4123456 / +54911 12345678
@@ -914,11 +915,12 @@ function CheckoutModal({ cart, onClose }) {
   };
 
   useEffect(() => {
-    if (step === 3 && waLink) {
-      const t = setTimeout(() => { window.open(waLink, '_blank'); }, 1500);
+    // Si hay link de MP, redirigir automáticamente después de 2 segundos
+    if (step === 3 && initPoint) {
+      const t = setTimeout(() => { window.location.href = initPoint; }, 2000);
       return () => clearTimeout(t);
     }
-  }, [step, waLink]);
+  }, [step, initPoint]);
 
   const fields = [
     { key:'name',     label:'Nombre completo',    type:'text' },
@@ -955,7 +957,7 @@ function CheckoutModal({ cart, onClose }) {
       });
       clearTimeout(timeout);
       const data = await res.json();
-      if (data.ok) { setWaLink(data.whatsappUrl); setStep(3); }
+      if (data.ok) { setWaLink(data.whatsappUrl); setInitPoint(data.initPoint || ''); setStep(3); }
       else { setErrMsg(data.error || 'Error al procesar el pedido.'); setStep(4); }
     } catch (err) {
       clearTimeout(timeout);
@@ -1034,15 +1036,33 @@ function CheckoutModal({ cart, onClose }) {
           <div className="p-10 text-center">
             <p className="font-condensed font-black italic text-6xl text-orange mb-4">🔥</p>
             <h4 className="section-title text-3xl mb-4">ENCARGO RECIBIDO</h4>
-            <p className="font-mono text-gray-400 text-sm leading-loose mb-4">
-              ¡Gracias, {form.name}! Te mandamos un email de confirmación y se abrió WhatsApp para coordinar el pago.
-            </p>
-            <p className="font-mono text-xs text-orange/70 mb-2">📧 Si no ves el email revisá la carpeta de spam.</p>
-            <p className="font-mono text-xs text-gray-600 mb-6">
-              Ref: <span className="text-orange font-bold">${total} USD</span> · <span className="text-white">{form.email}</span>
-            </p>
-            <a href={waLink} target="_blank" rel="noopener noreferrer" className="btn-primary px-8 py-3 text-lg mb-3 w-full">Abrir WhatsApp</a>
-            <button onClick={onClose} className="btn-secondary w-full py-3 text-sm mt-2">Volver al Catálogo</button>
+            {initPoint ? (
+              <>
+                <p className="font-mono text-gray-400 text-sm leading-loose mb-4">
+                  ¡Gracias, {form.name}! Serás redirigido a Mercado Pago para completar el pago en segundos...
+                </p>
+                <p className="font-mono text-xs text-gray-500 mb-6">
+                  Ref: <span className="text-orange font-bold">{total} USD</span> · <span className="text-white">{form.email}</span>
+                </p>
+                <a href={initPoint} className="btn-primary px-8 py-4 text-xl mb-3 w-full flex items-center justify-center gap-3">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  Pagar con Mercado Pago
+                </a>
+                <a href={waLink} target="_blank" rel="noopener noreferrer" className="btn-secondary w-full py-3 text-sm mt-2">Coordinar por WhatsApp</a>
+              </>
+            ) : (
+              <>
+                <p className="font-mono text-gray-400 text-sm leading-loose mb-4">
+                  ¡Gracias, {form.name}! Te mandamos un email de confirmación. Coordiná el pago por WhatsApp.
+                </p>
+                <p className="font-mono text-xs text-orange/70 mb-2">📧 Si no ves el email revisá la carpeta de spam.</p>
+                <p className="font-mono text-xs text-gray-600 mb-6">
+                  Ref: <span className="text-orange font-bold">{total} USD</span> · <span className="text-white">{form.email}</span>
+                </p>
+                <a href={waLink} target="_blank" rel="noopener noreferrer" className="btn-primary px-8 py-3 text-lg mb-3 w-full">Abrir WhatsApp</a>
+              </>
+            )}
+            <button onClick={onClose} className="font-mono text-xs text-gray-600 hover:text-gray-400 mt-4 transition-colors">Volver al catálogo</button>
           </div>
         )}
 
@@ -1099,6 +1119,40 @@ function Footer() {
 }
 
 /* ── APP ── */
+function PagoResultadoBanner() {
+  const [msg, setMsg] = useState(null);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const pago   = params.get('pago');
+    const ref    = params.get('ref');
+    if (pago === 'exitoso') {
+      setMsg({ tipo: 'ok', texto: `¡Pago confirmado! Tu pedido #${ref} está en proceso.` });
+    } else if (pago === 'pendiente') {
+      setMsg({ tipo: 'warn', texto: `Pago pendiente de acreditación. Te avisamos cuando se confirme (#${ref}).` });
+    } else if (pago === 'fallido') {
+      setMsg({ tipo: 'err', texto: 'El pago no se pudo completar. Podés intentar de nuevo o coordinarlo por WhatsApp.' });
+    }
+    if (pago) {
+      // Limpiar la URL sin recargar
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
+  if (!msg) return null;
+  const colors = { ok: '#22c55e', warn: '#f59e0b', err: '#ef4444' };
+  return (
+    <div style={{
+      position:'fixed', top:0, left:0, right:0, zIndex:9999,
+      background: colors[msg.tipo], color:'#000',
+      padding:'14px 24px', textAlign:'center',
+      fontFamily:'DM Mono, monospace', fontSize:'13px', fontWeight:600,
+    }}>
+      {msg.texto}
+      <button onClick={() => setMsg(null)} style={{marginLeft:16, fontWeight:700, cursor:'pointer'}}>✕</button>
+    </div>
+  );
+}
+
 function App() {
   const [cart,         setCart]         = useState([]);
   const [cartOpen,     setCartOpen]     = useState(false);
@@ -1126,6 +1180,7 @@ function App() {
 
   return (
     <>
+      <PagoResultadoBanner/>
       {toast && <Toast message={toast} onDone={() => setToast(null)}/>}
       <Navbar cartCount={cartCount} onCartOpen={() => setCartOpen(true)}/>
       <Ticker/>
