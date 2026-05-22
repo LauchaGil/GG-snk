@@ -12,7 +12,7 @@ const mpClient = new MercadoPagoConfig({
 const mpPreference = new Preference(mpClient);
 const mpPayment    = new Payment(mpClient);
 
-const TIPO_CAMBIO  = parseFloat(process.env.TIPO_CAMBIO_ARS  || '1200'); // 1 USD en ARS
+// Precios ya vienen en ARS desde el frontend — no se necesita conversión
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://ggsnk.store';
 const BACKEND_URL  = process.env.BACKEND_URL  || 'https://ggsnk-backend.onrender.com';
 
@@ -111,7 +111,7 @@ function emailFilaProducto(item) {
       <p style="margin:2px 0;font-size:11px;color:#666;">Talle ${item.size} EUR</p>
     </td>
     <td style="padding:12px 0;border-bottom:1px solid #2a1a08;text-align:right;vertical-align:top;">
-      <p style="margin:0;font-size:16px;font-weight:900;font-style:italic;color:#fff;">$${item.price} <span style="font-size:11px;color:#666;font-weight:400;font-style:normal;">USD</span></p>
+      <p style="margin:0;font-size:16px;font-weight:900;font-style:italic;color:#fff;">$${Number(item.price).toLocaleString('es-AR')} <span style="font-size:11px;color:#666;font-weight:400;font-style:normal;">ARS</span></p>
     </td>
   </tr>`;
 }
@@ -133,10 +133,10 @@ function htmlEmailTienda(items, cliente, pedidoId) {
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;border-top:2px solid #FF6600;padding-top:16px;">
       <tr>
         <td style="font-size:13px;color:#999;font-style:italic;">Total referencial</td>
-        <td style="text-align:right;font-size:24px;font-weight:900;font-style:italic;color:#FF6600;">$${total} <span style="font-size:12px;color:#666;font-weight:400;font-style:normal;">USD</span></td>
+        <td style="text-align:right;font-size:24px;font-weight:900;font-style:italic;color:#FF6600;">$${Number(total).toLocaleString('es-AR')} <span style="font-size:12px;color:#666;font-weight:400;font-style:normal;">ARS</span></td>
       </tr>
     </table>
-    <p style="margin:12px 0 0;font-size:10px;color:#444;">* Precio en ARS se cotiza al confirmar el encargo.</p>
+    <p style="margin:12px 0 0;font-size:10px;color:#444;">* Precio en ARS. El pago se procesa vía Mercado Pago.</p>
   `;
   return emailHTML({
     titulo: `Nuevo pedido #${pedidoId}`,
@@ -156,10 +156,10 @@ function htmlEmailCliente(items, cliente, pedidoId) {
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;border-top:2px solid #FF6600;padding-top:16px;">
       <tr>
         <td style="font-size:13px;color:#999;font-style:italic;">Total referencial</td>
-        <td style="text-align:right;font-size:24px;font-weight:900;font-style:italic;color:#FF6600;">$${total} <span style="font-size:12px;color:#666;font-weight:400;font-style:normal;">USD</span></td>
+        <td style="text-align:right;font-size:24px;font-weight:900;font-style:italic;color:#FF6600;">$${Number(total).toLocaleString('es-AR')} <span style="font-size:12px;color:#666;font-weight:400;font-style:normal;">ARS</span></td>
       </tr>
     </table>
-    <p style="margin:12px 0 0;font-size:10px;color:#444;">* Precio en ARS se cotiza al confirmar el encargo.</p>
+    <p style="margin:12px 0 0;font-size:10px;color:#444;">* Precio en ARS. El pago se procesa vía Mercado Pago.</p>
     <div style="margin-top:28px;padding:16px;background:#0d0a07;border:1px solid #2a1a08;border-left:3px solid #FF6600;">
       <p style="margin:0;font-size:11px;color:#666;">Si no recibís respuesta en 48hs escribinos directo por Instagram o WhatsApp.</p>
     </div>
@@ -237,7 +237,7 @@ app.post('/api/pedido', async (req, res) => {
           id          : item.model?.replace(/\s+/g, '-').toLowerCase() || 'zapatilla',
           title       : `${item.brand} ${item.model} — ${item.color} (T.${item.size})`,
           quantity    : 1,
-          unit_price  : Math.round(item.price * TIPO_CAMBIO),
+          unit_price  : item.price,   // Ya viene en ARS desde el frontend
           currency_id : 'ARS',
         }));
         const prefData = await mpPreference.create({

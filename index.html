@@ -117,6 +117,9 @@
 <script type="text/babel">
 const { useState, useEffect, useCallback, useRef } = React;
 
+// Formatea precio en ARS: 120000 → "$120.000"
+const ars = (n) => '$' + Number(n).toLocaleString('es-AR');
+
 const sortColorways = (cws) => [...cws].sort((a, b) => {
   const aB = a.name.toLowerCase().startsWith('black') || a.name.toLowerCase() === 'black';
   const bB = b.name.toLowerCase().startsWith('black') || b.name.toLowerCase() === 'black';
@@ -140,7 +143,7 @@ const MODELS = [
     id: 'nike-p6000',
     brand: 'NIKE',
     model: 'P-6000',
-    price: 80,
+    price: 120000,
     sizes: [38,39,40,41,42,43,44],
     coverCw: 'p6000-black-white',
     lifestyleImg: LIFE + 'Nike P-6000 White 2.jpg',
@@ -175,7 +178,7 @@ const MODELS = [
     id: 'nike-vomero5',
     brand: 'NIKE',
     model: 'VOMERO 5',
-    price: 80,
+    price: 120000,
     sizes: [38,39,40,41,42,43,44],
     lifestyleImg: LIFE + 'Nike P-6000 manos.jpg',
     colorways: [
@@ -193,7 +196,7 @@ const MODELS = [
     id: 'nb-740',
     brand: 'NEW BALANCE',
     model: '740',
-    price: 70,
+    price: 105000,
     sizes: [38,39,40,41,42,43,44],
     coverCw: '740-black-grey',
     lifestyleImg: LIFE + 'New Balance 740 modelo.jpg',
@@ -215,7 +218,7 @@ const MODELS = [
     id: 'nb-1906',
     brand: 'NEW BALANCE',
     model: '1906',
-    price: 85,
+    price: 130000,
     sizes: [39,40,41,42,43,44,45],
     coverCw: '1906-grey-silver',
     lifestyleImg: LIFE + 'New Balance negras piedras.jpg',
@@ -241,7 +244,7 @@ const MODELS = [
     id: 'asics-kayano14',
     brand: 'ASICS',
     model: 'GEL-KAYANO 14',
-    price: 80,
+    price: 120000,
     sizes: [37,38,39,40,41,42,43,44],
     coverCw: 'k14-grey',
     lifestyleImg: LIFE + 'Asics GEL-Kayano 14.jpg',
@@ -262,7 +265,7 @@ const MODELS = [
     id: 'asics-kinetic',
     brand: 'ASICS',
     model: 'GEL-KINETIC FLUENT',
-    price: 85,
+    price: 130000,
     sizes: [37,38,39,40,41,42,43,44],
     lifestyleImg: LIFE + 'ASICS street escaleras.jpg',
     colorways: [
@@ -275,7 +278,7 @@ const MODELS = [
     id: 'asics-gel-nyc',
     brand: 'ASICS',
     model: 'GEL-NYC',
-    price: 70,
+    price: 105000,
     sizes: [37,38,39,40,41,42,43,44],
     coverCw: 'nyc-black-silver',
     lifestyleImg: LIFE + 'ASICS street escaleras.jpg',
@@ -299,14 +302,14 @@ const MODELS = [
     id: 'adidas-response-cl',
     brand: 'ADIDAS',
     model: 'RESPONSE CL',
-    price: 80,
+    price: 120000,
     sizes: [38,39,40,41,42,43,44],
     coverCw: 'cl-badbunny',
     lifestyleImg: CAT + 'Adidas/Response/Response CL Bad Bunny Western.jpg',
     colorways: [
       { id:'cl-cream',       name:'Cream',            folder: CAT+'Adidas/Response/Response CL/cream-CL/', images:['main/pcitem1774107772-3230000001920d9cd5910a2396f4_1152_768.jpg.webp','qc/pcitem1774107772-2f7d000001920d9cd77f0a20e2c5_1152_768.jpg.webp','qc/pcitem1774107772-3553000001920d9ce6eb0a2303ee_1152_768.jpg.webp','qc/pcitem1774107772-6fb6000001920d9cdc100a21146b_1152_768.jpg.webp'] },
       { id:'cl-grey',        name:'Grey',             folder: CAT+'Adidas/Response/Response CL/grey-CL/', images:['main/pcitem1774107772-27340000018c58f84ed80a2312e8_1152_768.jpg.webp','qc/pcitem1774107772-23740000018c58f864300a22d4f5_1152_768.jpg.webp','qc/pcitem1774107772-27da0000018c58f856550a20e2c5_1152_768.jpg.webp','qc/pcitem1774107772-32190000018c58f8512d0a20e672_1152_768.jpg.webp'] },
-      { id:'cl-badbunny',    name:'Bad Bunny — White',folder: CAT+'Adidas/Response/Response CL/white-badbunny/', images:['main/weidian1558770107-24bc0000018f9c592bfa0a20e35c_1512_2016.jpg.webp','qc/weidian1558770107-25390000018f9c5927730a231316_1465_1953.jpg.webp','qc/weidian1558770107-27c90000018f9c5909f60a21146b_1512_2016.jpg.webp','qc/weidian1558770107-62590000018f9c59047d0a230115_1512_2016.jpg.webp'], price: 145 },
+      { id:'cl-badbunny',    name:'Bad Bunny — White',folder: CAT+'Adidas/Response/Response CL/white-badbunny/', images:['main/weidian1558770107-24bc0000018f9c592bfa0a20e35c_1512_2016.jpg.webp','qc/weidian1558770107-25390000018f9c5927730a231316_1465_1953.jpg.webp','qc/weidian1558770107-27c90000018f9c5909f60a21146b_1512_2016.jpg.webp','qc/weidian1558770107-62590000018f9c59047d0a230115_1512_2016.jpg.webp'], price: 120000 },
     ]
   },
 ];
@@ -520,7 +523,7 @@ function ModelCard({ model, onClick }) {
       <div className="p-3 border-t border-border">
         <p className="font-mono text-[9px] text-orange uppercase tracking-[.3em] mb-0.5">{model.brand}</p>
         <h4 className="font-condensed font-black italic uppercase text-xl leading-tight">{model.model}</h4>
-        <p className="font-mono text-[10px] text-gray-500 mt-0.5">desde ${minPrice} USD</p>
+        <p className="font-mono text-[10px] text-gray-500 mt-0.5">desde {ars(minPrice)}</p>
       </div>
     </div>
   );
@@ -683,8 +686,8 @@ function ModelModal({ model, onClose, onAdd }) {
           {/* ─ Precio + CTA ─ */}
           <div className="mt-auto border-t border-border pt-5">
             <div className="flex items-baseline gap-2 mb-1">
-              <span className="font-condensed font-black italic text-4xl">${price}</span>
-              <span className="font-mono text-gray-500 text-sm">USD</span>
+              <span className="font-condensed font-black italic text-4xl">{ars(price)}</span>
+              <span className="font-mono text-gray-500 text-sm">ARS</span>
               <span className="font-mono text-gray-600 text-xs ml-2">· precio encargo</span>
             </div>
             <p className="font-mono text-[10px] text-gray-600 mb-4">Precio en ARS se cotiza al confirmar el pedido.</p>
@@ -787,8 +790,8 @@ function Catalog({ onAdd }) {
 function ComoFunciona() {
   const steps = [
     { n:'01', title:'Elegís el modelo',    desc:'Navegá el catálogo por marca, seleccioná el modelo y el colorway que querés.' },
-    { n:'02', title:'Nos contactamos',     desc:'Te escribimos por WhatsApp para confirmar precio en ARS y disponibilidad.' },
-    { n:'03', title:'Coordinamos el pago', desc:'Aceptamos transferencia, MercadoPago o efectivo según lo que prefieran.' },
+    { n:'02', title:'Confirmás el pedido',  desc:'Completás tus datos y pagás directo con Mercado Pago. Simple y seguro.' },
+    { n:'03', title:'Realizamos el encargo', desc:'Confirmado el pago, hacemos el encargo. Te avisamos por WhatsApp.' },
     { n:'04', title:'Llega a tu puerta',   desc:'Importamos el par especialmente para vos. Envío a todo el país en 15–20 días.' },
   ];
   return (
@@ -866,7 +869,7 @@ function CartSidebar({ cart, isOpen, onClose, onRemove, onQtyChange, onCheckout 
                       className="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-orange transition-colors font-bold text-sm">+</button>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="font-condensed font-black italic text-xl">${item.price * item.qty}</span>
+                    <span className="font-condensed font-black italic text-xl">{ars(item.price * item.qty)}</span>
                     <button onClick={() => onRemove(item)} className="text-gray-600 hover:text-red-500 transition-colors font-mono text-xs">×</button>
                   </div>
                 </div>
@@ -878,7 +881,7 @@ function CartSidebar({ cart, isOpen, onClose, onRemove, onQtyChange, onCheckout 
           <div className="border-t border-border p-6 flex-shrink-0">
             <div className="flex justify-between items-baseline mb-1">
               <span className="font-mono text-xs uppercase tracking-widest text-gray-500">Total estimado</span>
-              <span className="font-condensed font-black italic text-3xl">${total} <span className="text-sm text-gray-500 font-mono not-italic font-normal">USD</span></span>
+              <span className="font-condensed font-black italic text-3xl">{ars(total)} <span className="text-sm text-gray-500 font-mono not-italic font-normal">ARS</span></span>
             </div>
             <p className="font-mono text-[10px] text-gray-600 mb-5">El valor en ARS se cotiza al confirmar el encargo.</p>
             <button onClick={onCheckout} className="btn-primary w-full py-4 text-xl mb-2">Confirmar Encargo</button>
@@ -1012,13 +1015,13 @@ function CheckoutModal({ cart, onClose }) {
               {cart.map(item => (
                 <div key={`${item.id}-${item.size}`} className="flex justify-between font-mono text-xs text-gray-400 py-1 border-b border-border last:border-0">
                   <span>{item.brand} {item.model} · {item.color} · T.{item.size} x{item.qty}</span>
-                  <span>${item.price * item.qty}</span>
+                  <span>{ars(item.price * item.qty)}</span>
                 </div>
               ))}
               <div className="flex justify-between mt-3 font-condensed font-black italic text-2xl">
-                <span>TOTAL REF.</span><span>${total} USD</span>
+                <span>TOTAL</span><span>{ars(total)} ARS</span>
               </div>
-              <p className="font-mono text-[10px] text-gray-600 mt-2">Precio final en ARS a confirmar por WhatsApp.</p>
+              <p className="font-mono text-[10px] text-gray-600 mt-2">Precio final en ARS. Podés pagar con Mercado Pago.</p>
             </div>
             <button type="submit" className="btn-primary w-full py-4 text-xl">Confirmar Encargo</button>
           </form>
@@ -1042,7 +1045,7 @@ function CheckoutModal({ cart, onClose }) {
                   ¡Gracias, {form.name}! Serás redirigido a Mercado Pago para completar el pago en segundos...
                 </p>
                 <p className="font-mono text-xs text-gray-500 mb-6">
-                  Ref: <span className="text-orange font-bold">{total} USD</span> · <span className="text-white">{form.email}</span>
+                  Ref: <span className="text-orange font-bold">{ars(total)}</span> · <span className="text-white">{form.email}</span>
                 </p>
                 <a href={initPoint} className="btn-primary px-8 py-4 text-xl mb-3 w-full flex items-center justify-center gap-3">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -1057,7 +1060,7 @@ function CheckoutModal({ cart, onClose }) {
                 </p>
                 <p className="font-mono text-xs text-orange/70 mb-2">📧 Si no ves el email revisá la carpeta de spam.</p>
                 <p className="font-mono text-xs text-gray-600 mb-6">
-                  Ref: <span className="text-orange font-bold">{total} USD</span> · <span className="text-white">{form.email}</span>
+                  Ref: <span className="text-orange font-bold">{ars(total)}</span> · <span className="text-white">{form.email}</span>
                 </p>
                 <a href={waLink} target="_blank" rel="noopener noreferrer" className="btn-primary px-8 py-3 text-lg mb-3 w-full">Abrir WhatsApp</a>
               </>
