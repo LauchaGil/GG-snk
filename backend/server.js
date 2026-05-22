@@ -43,33 +43,121 @@ app.use(express.json());
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ── Helpers ──────────────────────────────────────────────────
-function formatearPedidoEmail(items, cliente) {
-  const filas = items.map(item =>
-    `👟 ${item.brand} ${item.model} — ${item.color} — Talle ${item.size} — $${item.price} USD`
-  ).join('\n');
+function emailHTML({ titulo, encabezado, contenido, footer }) {
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0d0a07;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d0a07;padding:32px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
 
-  const total = items.reduce((sum, i) => sum + i.price, 0);
+        <!-- HEADER -->
+        <tr>
+          <td style="background:#080502;border:1px solid #2a1a08;padding:32px 40px;text-align:center;border-bottom:3px solid #FF6600;">
+            <p style="margin:0;font-size:42px;font-weight:900;font-style:italic;color:#FF6600;letter-spacing:-1px;text-transform:uppercase;">GG'SNK</p>
+            <p style="margin:6px 0 0;font-size:11px;color:#666;letter-spacing:4px;text-transform:uppercase;">Retro Runners Importados</p>
+          </td>
+        </tr>
 
+        <!-- TITULO -->
+        <tr>
+          <td style="background:#FF6600;padding:14px 40px;text-align:center;">
+            <p style="margin:0;font-size:13px;font-weight:900;color:#080502;letter-spacing:3px;text-transform:uppercase;">${titulo}</p>
+          </td>
+        </tr>
+
+        <!-- CONTENIDO -->
+        <tr>
+          <td style="background:#120b05;border:1px solid #2a1a08;border-top:none;padding:32px 40px;">
+            <p style="margin:0 0 24px;font-size:16px;color:#fff;">${encabezado}</p>
+            ${contenido}
+          </td>
+        </tr>
+
+        <!-- FOOTER -->
+        <tr>
+          <td style="background:#080502;border:1px solid #2a1a08;border-top:3px solid #2a1a08;padding:20px 40px;text-align:center;">
+            <p style="margin:0;font-size:10px;color:#444;letter-spacing:3px;text-transform:uppercase;">${footer}</p>
+            <p style="margin:8px 0 0;font-size:10px;color:#333;letter-spacing:2px;text-transform:uppercase;">ggsnk.store · City Bell, Argentina</p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+function emailFilaProducto(item) {
   return `
-🛒 NUEVO PEDIDO — GG'SNK
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  <tr>
+    <td style="padding:12px 0;border-bottom:1px solid #2a1a08;">
+      <p style="margin:0;font-size:11px;color:#FF6600;letter-spacing:2px;text-transform:uppercase;">${item.brand}</p>
+      <p style="margin:2px 0;font-size:15px;font-weight:700;color:#fff;">${item.model} — ${item.color}</p>
+      <p style="margin:2px 0;font-size:11px;color:#666;">Talle ${item.size} EUR</p>
+    </td>
+    <td style="padding:12px 0;border-bottom:1px solid #2a1a08;text-align:right;vertical-align:top;">
+      <p style="margin:0;font-size:16px;font-weight:900;font-style:italic;color:#fff;">$${item.price} <span style="font-size:11px;color:#666;font-weight:400;font-style:normal;">USD</span></p>
+    </td>
+  </tr>`;
+}
 
-👤 DATOS DEL CLIENTE
-Nombre    : ${cliente.nombre}
-Email     : ${cliente.email}
-Tel       : ${cliente.telefono || 'No indicado'}
-Provincia : ${cliente.provincia || 'No indicada'}
-Dirección : ${cliente.direccion || 'No indicada'}
-
-📦 PRODUCTOS
-${filas}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-💵 TOTAL : $${total} USD
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-* Precio en ARS a cotizar al confirmar.
+function htmlEmailTienda(items, cliente, pedidoId) {
+  const total = items.reduce((sum, i) => sum + i.price, 0);
+  const filas = items.map(emailFilaProducto).join('');
+  const contenido = `
+    <p style="margin:0 0 6px;font-size:11px;color:#FF6600;letter-spacing:3px;text-transform:uppercase;">Cliente</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;background:#0d0a07;border:1px solid #2a1a08;padding:16px;">
+      <tr><td style="font-size:12px;color:#999;padding:3px 0;">Nombre</td><td style="font-size:12px;color:#fff;text-align:right;">${cliente.nombre}</td></tr>
+      <tr><td style="font-size:12px;color:#999;padding:3px 0;">Email</td><td style="font-size:12px;color:#fff;text-align:right;">${cliente.email}</td></tr>
+      <tr><td style="font-size:12px;color:#999;padding:3px 0;">Teléfono</td><td style="font-size:12px;color:#fff;text-align:right;">${cliente.telefono || 'No indicado'}</td></tr>
+      <tr><td style="font-size:12px;color:#999;padding:3px 0;">Provincia</td><td style="font-size:12px;color:#fff;text-align:right;">${cliente.provincia || 'No indicada'}</td></tr>
+      <tr><td style="font-size:12px;color:#999;padding:3px 0;">Dirección</td><td style="font-size:12px;color:#fff;text-align:right;">${cliente.direccion || 'No indicada'}</td></tr>
+    </table>
+    <p style="margin:0 0 6px;font-size:11px;color:#FF6600;letter-spacing:3px;text-transform:uppercase;">Productos</p>
+    <table width="100%" cellpadding="0" cellspacing="0">${filas}</table>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;border-top:2px solid #FF6600;padding-top:16px;">
+      <tr>
+        <td style="font-size:13px;color:#999;font-style:italic;">Total referencial</td>
+        <td style="text-align:right;font-size:24px;font-weight:900;font-style:italic;color:#FF6600;">$${total} <span style="font-size:12px;color:#666;font-weight:400;font-style:normal;">USD</span></td>
+      </tr>
+    </table>
+    <p style="margin:12px 0 0;font-size:10px;color:#444;">* Precio en ARS se cotiza al confirmar el encargo.</p>
   `;
+  return emailHTML({
+    titulo: `Nuevo pedido #${pedidoId}`,
+    encabezado: `Nuevo encargo de <strong style="color:#FF6600;">${cliente.nombre}</strong>`,
+    contenido,
+    footer: `Pedido #${pedidoId} · ${new Date().toLocaleDateString('es-AR')}`,
+  });
+}
+
+function htmlEmailCliente(items, cliente, pedidoId) {
+  const total = items.reduce((sum, i) => sum + i.price, 0);
+  const filas = items.map(emailFilaProducto).join('');
+  const contenido = `
+    <p style="margin:0 0 20px;font-size:13px;color:#ccc;line-height:1.7;">Recibimos tu encargo y te escribimos en las próximas <strong style="color:#fff;">48 horas</strong> para coordinar el pago y confirmar disponibilidad.</p>
+    <p style="margin:0 0 6px;font-size:11px;color:#FF6600;letter-spacing:3px;text-transform:uppercase;">Tu pedido</p>
+    <table width="100%" cellpadding="0" cellspacing="0">${filas}</table>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;border-top:2px solid #FF6600;padding-top:16px;">
+      <tr>
+        <td style="font-size:13px;color:#999;font-style:italic;">Total referencial</td>
+        <td style="text-align:right;font-size:24px;font-weight:900;font-style:italic;color:#FF6600;">$${total} <span style="font-size:12px;color:#666;font-weight:400;font-style:normal;">USD</span></td>
+      </tr>
+    </table>
+    <p style="margin:12px 0 0;font-size:10px;color:#444;">* Precio en ARS se cotiza al confirmar el encargo.</p>
+    <div style="margin-top:28px;padding:16px;background:#0d0a07;border:1px solid #2a1a08;border-left:3px solid #FF6600;">
+      <p style="margin:0;font-size:11px;color:#666;">Si no recibís respuesta en 48hs escribinos directo por Instagram o WhatsApp.</p>
+    </div>
+  `;
+  return emailHTML({
+    titulo: `Encargo confirmado #${pedidoId}`,
+    encabezado: `¡Gracias, <strong style="color:#FF6600;">${cliente.nombre}</strong>!`,
+    contenido,
+    footer: `Ref #${pedidoId} · ${cliente.email}`,
+  });
 }
 
 function formatearMensajeWhatsApp(items, cliente) {
@@ -137,14 +225,14 @@ app.post('/api/pedido', async (req, res) => {
       from   : `GG'SNK Pedidos <pedidos@ggsnk.store>`,
       to     : process.env.EMAIL_DESTINO,
       subject: `Nuevo pedido #${pedidoId} — ${cliente.nombre}`,
-      text   : `Pedido #${pedidoId}\n` + formatearPedidoEmail(items, cliente),
+      html   : htmlEmailTienda(items, cliente, pedidoId),
     }).catch(err => console.error('Error email tienda:', err.message));
 
     resend.emails.send({
       from   : `GG'SNK <pedidos@ggsnk.store>`,
       to     : cliente.email,
       subject: `Recibimos tu pedido #${pedidoId} — GG'SNK`,
-      text   : `Hola ${cliente.nombre}!\n\nRecibimos tu pedido y te escribimos en las próximas horas para coordinar el pago.\n\n${formatearPedidoEmail(items, cliente)}\n\n— El equipo de GG'SNK`,
+      html   : htmlEmailCliente(items, cliente, pedidoId),
     }).catch(err => console.error('Error email cliente:', err.message));
 
   } catch (err) {
