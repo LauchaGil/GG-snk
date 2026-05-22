@@ -150,7 +150,7 @@ function htmlEmailCliente(items, cliente, pedidoId) {
   const total = items.reduce((sum, i) => sum + i.price, 0);
   const filas = items.map(emailFilaProducto).join('');
   const contenido = `
-    <p style="margin:0 0 20px;font-size:13px;color:#ccc;line-height:1.7;">Recibimos tu encargo y te escribimos en las próximas <strong style="color:#fff;">48 horas</strong> para coordinar el pago y confirmar disponibilidad.</p>
+    <p style="margin:0 0 20px;font-size:13px;color:#ccc;line-height:1.7;">Recibimos tu pago y estamos procesando tu encargo. Te avisamos por WhatsApp cuando esté confirmado.</p>
     <p style="margin:0 0 6px;font-size:11px;color:#FF6600;letter-spacing:3px;text-transform:uppercase;">Tu pedido</p>
     <table width="100%" cellpadding="0" cellspacing="0">${filas}</table>
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;border-top:2px solid #FF6600;padding-top:16px;">
@@ -161,7 +161,7 @@ function htmlEmailCliente(items, cliente, pedidoId) {
     </table>
     <p style="margin:12px 0 0;font-size:10px;color:#444;">* Precio en ARS. El pago se procesa vía Mercado Pago.</p>
     <div style="margin-top:28px;padding:16px;background:#0d0a07;border:1px solid #2a1a08;border-left:3px solid #FF6600;">
-      <p style="margin:0;font-size:11px;color:#666;">Si no recibís respuesta en 48hs escribinos directo por Instagram o WhatsApp.</p>
+      <p style="margin:0;font-size:11px;color:#666;">¿Tenés alguna duda? Escribinos por Instagram o WhatsApp.</p>
     </div>
   `;
   return emailHTML({
