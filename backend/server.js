@@ -36,7 +36,7 @@ pool.query(`
     provincia   TEXT,
     direccion   TEXT,
     productos   TEXT    NOT NULL,
-    total_usd   REAL    NOT NULL,
+    total_ars   REAL    NOT NULL,
     estado      TEXT    NOT NULL DEFAULT 'Pendiente de pago',
     tracking    TEXT,
     notas       TEXT
@@ -48,7 +48,18 @@ pool.query(`
 });
 
 // ── Middlewares ──────────────────────────────────────────────
-app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'] }));
+const ALLOWED_ORIGINS = [
+  'https://ggsnk.store',
+  'https://www.ggsnk.store',
+];
+app.use(cors({
+  origin: (origin, callback) => {
+    // Permitir requests sin origin (ej: Postman, Render health checks)
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS bloqueado: ${origin}`));
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+}));
 app.use(express.json());
 
 // ── Resend (email API) ───────────────────────────────────────
@@ -211,7 +222,7 @@ app.post('/api/pedido', async (req, res) => {
   try {
     // 1 — Guardar en base de datos
     const result = await pool.query(
-      `INSERT INTO pedidos (fecha, nombre, email, telefono, provincia, direccion, productos, total_usd)
+      `INSERT INTO pedidos (fecha, nombre, email, telefono, provincia, direccion, productos, total_ars)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
       [
         new Date().toISOString(),
@@ -357,7 +368,7 @@ app.get('/api/stats', async (req, res) => {
       q("SELECT COUNT(*)::int AS n FROM pedidos WHERE estado = 'Encargo realizado'"),
       q("SELECT COUNT(*)::int AS n FROM pedidos WHERE estado = 'En camino'"),
       q("SELECT COUNT(*)::int AS n FROM pedidos WHERE estado = 'Entregado'"),
-      q("SELECT COALESCE(SUM(total_usd), 0) AS s FROM pedidos WHERE estado != 'Pendiente de pago'"),
+      q("SELECT COALESCE(SUM(total_ars), 0) AS s FROM pedidos WHERE estado != 'Pendiente de pago'"),
     ]);
 
     res.json({ ok: true, stats: {

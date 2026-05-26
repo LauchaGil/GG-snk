@@ -247,7 +247,7 @@ function renderTabla() {
           <p class="font-mono text-[10px] text-gray-600">${p.email}</p>
         </td>
         <td class="px-4 py-3 font-mono text-xs text-gray-400 max-w-xs truncate">${prods}</td>
-        <td class="px-4 py-3 font-condensed font-black italic text-lg text-orange">$${Number(p.total_usd).toLocaleString('es-AR')} ARS</td>
+        <td class="px-4 py-3 font-condensed font-black italic text-lg text-orange">$${Number(p.total_ars).toLocaleString('es-AR')} ARS</td>
         <td class="px-4 py-3">
           <span class="font-mono text-[10px] uppercase tracking-widest px-2 py-1 border ${colorCls}">${p.estado}</span>
           ${p.tracking ? `<p class="font-mono text-[9px] text-gray-600 mt-1">📍 ${p.tracking}</p>` : ''}
@@ -289,7 +289,7 @@ function abrirModal(id) {
           <span class="text-orange font-bold">$${Number(i.price).toLocaleString('es-AR')} ARS</span>
         </div>`).join('')}
       <div class="flex justify-between font-condensed font-black italic text-xl mt-3">
-        <span>TOTAL</span><span class="text-orange">$${Number(p.total_usd).toLocaleString('es-AR')} ARS</span>
+        <span>TOTAL</span><span class="text-orange">$${Number(p.total_ars).toLocaleString('es-AR')} ARS</span>
       </div>
     </div>
 
