@@ -442,6 +442,36 @@ app.post('/api/webhook/mercadopago', async (req, res) => {
   }
 });
 
+// ── GET /api/seguimiento/:id — estado público del pedido ─────
+app.get('/api/seguimiento/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      'SELECT id, fecha, productos, total_ars, estado, tracking FROM pedidos WHERE id = $1',
+      [id]
+    );
+    if (result.rows.length === 0)
+      return res.json({ ok: false, error: 'Pedido no encontrado. Revisá el número.' });
+    const p         = result.rows[0];
+    const productos = JSON.parse(p.productos);
+    res.json({
+      ok: true,
+      pedido: {
+        id        : p.id,
+        fecha     : p.fecha,
+        estado    : p.estado,
+        tracking  : p.tracking,
+        total_ars : p.total_ars,
+        cantidad  : productos.length,
+        productos : productos.map(i => ({ brand: i.brand, model: i.model, color: i.color, size: i.size })),
+      },
+    });
+  } catch (err) {
+    console.error('Error seguimiento:', err.message);
+    res.status(500).json({ ok: false, error: 'Error al buscar el pedido.' });
+  }
+});
+
 // ── Health check ─────────────────────────────────────────────
 app.get('/api/status', (req, res) => {
   res.json({ ok: true, mensaje: "GG'SNK backend corriendo 🟢" });

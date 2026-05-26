@@ -333,7 +333,7 @@ function Toast({ message, onDone }) {
 }
 
 /* ── NAVBAR ── */
-function Navbar({ cartCount, onCartOpen }) {
+function Navbar({ cartCount, onCartOpen, favCount, onWishlistOpen }) {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 60);
@@ -347,24 +347,40 @@ function Navbar({ cartCount, onCartOpen }) {
           GG&apos;SNK
         </a>
         <div className="hidden md:flex items-center gap-8">
-          <a href="#inicio"    className="font-mono text-[11px] uppercase tracking-[.25em] text-gray-400 hover:text-orange transition-colors" style={{textDecoration:'none'}}>Inicio</a>
-          <a href="#modelos"   className="font-mono text-[11px] uppercase tracking-[.25em] text-gray-400 hover:text-orange transition-colors" style={{textDecoration:'none'}}>Modelos</a>
-          <a href="#catalogo"  className="font-mono text-[11px] uppercase tracking-[.25em] text-gray-400 hover:text-orange transition-colors" style={{textDecoration:'none'}}>Catálogo</a>
+          <a href="#inicio"       className="font-mono text-[11px] uppercase tracking-[.25em] text-gray-400 hover:text-orange transition-colors" style={{textDecoration:'none'}}>Inicio</a>
+          <a href="#modelos"      className="font-mono text-[11px] uppercase tracking-[.25em] text-gray-400 hover:text-orange transition-colors" style={{textDecoration:'none'}}>Modelos</a>
+          <a href="#catalogo"     className="font-mono text-[11px] uppercase tracking-[.25em] text-gray-400 hover:text-orange transition-colors" style={{textDecoration:'none'}}>Catálogo</a>
           <a href="#como-funciona" className="font-mono text-[11px] uppercase tracking-[.25em] text-gray-400 hover:text-orange transition-colors" style={{textDecoration:'none'}}>Cómo Funciona</a>
+          <a href="#seguimiento"  className="font-mono text-[11px] uppercase tracking-[.25em] text-gray-400 hover:text-orange transition-colors" style={{textDecoration:'none'}}>Mi Pedido</a>
+          <a href="#faq"          className="font-mono text-[11px] uppercase tracking-[.25em] text-gray-400 hover:text-orange transition-colors" style={{textDecoration:'none'}}>FAQ</a>
         </div>
-        <button onClick={onCartOpen} className="btn-secondary relative flex items-center gap-2 px-5 py-2 text-sm flex-shrink-0">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <path d="M16 10a4 4 0 01-8 0"/>
-          </svg>
-          MI PEDIDO
-          {cartCount > 0 && (
-            <span className="absolute -top-2 -right-2 bg-orange text-bg text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center leading-none">
-              {cartCount}
-            </span>
-          )}
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Botón favoritos */}
+          <button onClick={onWishlistOpen} className="relative flex items-center justify-center w-10 h-10 border border-border text-gray-500 hover:text-orange hover:border-orange transition-colors">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill={favCount > 0 ? '#FF6600' : 'none'} stroke={favCount > 0 ? '#FF6600' : 'currentColor'} strokeWidth="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+            {favCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-orange text-bg text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center leading-none">
+                {favCount}
+              </span>
+            )}
+          </button>
+          {/* Botón carrito */}
+          <button onClick={onCartOpen} className="btn-secondary relative flex items-center gap-2 px-3 sm:px-5 py-2 text-sm flex-shrink-0">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <path d="M16 10a4 4 0 01-8 0"/>
+            </svg>
+            <span className="hidden sm:inline">MI PEDIDO</span>
+            {cartCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-orange text-bg text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center leading-none">
+                {cartCount}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
     </nav>
   );
@@ -481,7 +497,7 @@ function LifestyleSection() {
 }
 
 /* ── MODEL CARD (nueva versión) ── */
-function ModelCard({ model, onClick }) {
+function ModelCard({ model, onClick, isFav, onToggleFav }) {
   const firstCw  = model.coverCw
     ? (model.colorways.find(cw => cw.id === model.coverCw) || model.colorways[0])
     : model.colorways[0];
@@ -502,6 +518,16 @@ function ModelCard({ model, onClick }) {
           style={{objectFit:'contain', padding:'14px'}}
           onError={e => { e.target.style.objectFit='cover'; e.target.style.padding='0'; }}
         />
+        {/* Botón favorito */}
+        <button
+          onClick={e => { e.stopPropagation(); onToggleFav(model.id); }}
+          className="absolute top-2 left-2 w-7 h-7 flex items-center justify-center bg-bg/80 backdrop-blur-sm border border-border hover:border-orange transition-colors"
+          title={isFav ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill={isFav ? '#FF6600' : 'none'} stroke={isFav ? '#FF6600' : '#666'} strokeWidth="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </button>
         {/* Encargo badge */}
         <div className="absolute top-2 right-2">
           <span className="encargo-badge">Encargo</span>
@@ -530,13 +556,23 @@ function ModelCard({ model, onClick }) {
 }
 
 /* ── MODEL MODAL (nueva versión con gallery + colorways) ── */
-function ModelModal({ model, onClose, onAdd }) {
-  const sortedCws = sortColorways(model.colorways);
-  const [activeCw,  setActiveCw]  = useState(sortedCws[0]);
+function ModelModal({ model, onClose, onAdd, initialColorId }) {
+  const sortedCws  = sortColorways(model.colorways);
+  const initCw     = initialColorId
+    ? (sortedCws.find(cw => cw.id === initialColorId) || sortedCws[0])
+    : sortedCws[0];
+  const [activeCw,  setActiveCw]  = useState(initCw);
   const [photoIdx,  setPhotoIdx]  = useState(0);
   const [selSize,   setSelSize]   = useState(null);
   const [sizeErr,   setSizeErr]   = useState(false);
   const [added,     setAdded]     = useState(false);
+  const [copied,    setCopied]    = useState(false);
+
+  // Actualiza URL al abrir el modal
+  useEffect(() => {
+    window.history.replaceState({}, '', `?modelo=${model.id}&color=${initCw.id}`);
+    return () => window.history.replaceState({}, '', window.location.pathname);
+  }, []);
 
   useEffect(() => {
     const fn = e => { if (e.key === 'Escape') onClose(); };
@@ -550,6 +586,15 @@ function ModelModal({ model, onClose, onAdd }) {
     setSelSize(null);
     setSizeErr(false);
     setAdded(false);
+    window.history.replaceState({}, '', `?modelo=${model.id}&color=${cw.id}`);
+  };
+
+  const handleShare = () => {
+    const url = `${window.location.origin}${window.location.pathname}?modelo=${model.id}&color=${activeCw.id}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   };
 
   const handleAdd = () => {
@@ -632,7 +677,27 @@ function ModelModal({ model, onClose, onAdd }) {
             <h3 className="font-condensed font-black italic uppercase leading-none mb-1" style={{fontSize:'clamp(30px,5vw,46px)'}}>
               {model.model}
             </h3>
-            <p className="font-mono text-orange text-xs uppercase tracking-[.2em]">{activeCw.name}</p>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+              <p className="font-mono text-orange text-xs uppercase tracking-[.2em]">{activeCw.name}</p>
+              <button
+                onClick={handleShare}
+                className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest transition-colors"
+                style={{color: copied ? '#22c55e' : '#444'}}
+                title="Copiar link del producto"
+              >
+                {copied ? (
+                  <>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    Link copiado
+                  </>
+                ) : (
+                  <>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                    Compartir
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* ─ Selector de colorways ─ */}
@@ -708,12 +773,27 @@ function ModelModal({ model, onClose, onAdd }) {
 }
 
 /* ── CATALOG (nuevo con tabs por marca) ── */
-function Catalog({ onAdd }) {
+function Catalog({ onAdd, wishlist, onToggleFav, activeModel, setActiveModel }) {
   const BRANDS = ['NIKE', 'NEW BALANCE', 'ASICS', 'ADIDAS'];
-  const [activeBrand, setActiveBrand] = useState('NIKE');
-  const [activeModel, setActiveModel] = useState(null);
+  const [activeBrand,    setActiveBrand]    = useState('NIKE');
+  const [initialColorId, setInitialColorId] = useState(null);
 
   const brandModels = MODELS.filter(m => m.brand === activeBrand);
+
+  // Parsear URL al montar para deep-link a modelo/colorway
+  useEffect(() => {
+    const params  = new URLSearchParams(window.location.search);
+    const modelId = params.get('modelo');
+    const colorId = params.get('color');
+    if (modelId) {
+      const model = MODELS.find(m => m.id === modelId);
+      if (model) {
+        setActiveBrand(model.brand);
+        setActiveModel(model);
+        setInitialColorId(colorId || null);
+      }
+    }
+  }, []);
 
   // Cuando cambia la marca, cerrar el modal si estaba abierto
   const handleBrandChange = (brand) => {
@@ -760,7 +840,13 @@ function Catalog({ onAdd }) {
       {/* Model grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-12">
         {brandModels.map(m => (
-          <ModelCard key={m.id} model={m} onClick={setActiveModel}/>
+          <ModelCard
+            key={m.id}
+            model={m}
+            onClick={model => { setActiveModel(model); setInitialColorId(null); }}
+            isFav={wishlist.includes(m.id)}
+            onToggleFav={onToggleFav}
+          />
         ))}
       </div>
 
@@ -778,8 +864,9 @@ function Catalog({ onAdd }) {
       {activeModel && (
         <ModelModal
           model={activeModel}
-          onClose={() => setActiveModel(null)}
+          onClose={() => { setActiveModel(null); setInitialColorId(null); }}
           onAdd={(product, size) => { onAdd(product, size); }}
+          initialColorId={initialColorId}
         />
       )}
     </section>
@@ -1081,6 +1168,243 @@ function CheckoutModal({ cart, onClose }) {
   );
 }
 
+/* ── SEGUIMIENTO DE PEDIDO ── */
+function SeguimientoPedido() {
+  const [pedidoId, setPedidoId] = useState('');
+  const [result,   setResult]   = useState(null);
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState('');
+
+  const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3001'
+    : 'https://ggsnk-backend.onrender.com';
+
+  const ESTADOS = ['Pendiente de pago','Pagado','Encargo realizado','En camino','Entregado'];
+
+  const handleBuscar = async (e) => {
+    e.preventDefault();
+    if (!pedidoId.trim()) return;
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const res  = await fetch(`${API_URL}/api/seguimiento/${pedidoId.trim()}`);
+      const data = await res.json();
+      if (data.ok) setResult(data.pedido);
+      else setError(data.error || 'Pedido no encontrado.');
+    } catch {
+      setError('No se pudo conectar. Intentá de nuevo.');
+    }
+    setLoading(false);
+  };
+
+  return (
+    <section id="seguimiento" className="py-20 border-t border-border">
+      <div className="max-w-7xl mx-auto px-6">
+        <p className="font-mono text-orange text-xs tracking-[.45em] uppercase mb-3">// Tu encargo</p>
+        <h2 className="section-title text-5xl md:text-7xl border-l-8 border-orange pl-6 leading-none mb-10">
+          SEGUÍ_<br/>TU_PEDIDO
+        </h2>
+        <div className="max-w-xl">
+          <form onSubmit={handleBuscar} className="flex gap-3 mb-8">
+            <input
+              type="text"
+              placeholder="Número de pedido (ej: 12)"
+              value={pedidoId}
+              onChange={e => setPedidoId(e.target.value.replace(/\D/g,''))}
+              className="flex-1 px-4 py-3 text-sm"
+            />
+            <button type="submit" disabled={loading} className="btn-primary px-6 py-3 text-sm flex-shrink-0">
+              {loading ? '...' : 'Buscar'}
+            </button>
+          </form>
+
+          {error && (
+            <div className="border border-red-500/30 p-4 mb-4" style={{background:'rgba(239,68,68,0.05)'}}>
+              <p className="font-mono text-red-400 text-sm">{error}</p>
+            </div>
+          )}
+
+          {result && (
+            <div className="border border-border bg-card p-6">
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
+                <div>
+                  <p className="font-mono text-[10px] text-orange uppercase tracking-widest mb-1">Pedido</p>
+                  <p className="font-condensed font-black italic text-3xl">#{result.id}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-mono text-[10px] text-gray-600 uppercase tracking-widest mb-1">Fecha</p>
+                  <p className="font-mono text-xs text-gray-400">{new Date(result.fecha).toLocaleDateString('es-AR')}</p>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <p className="font-mono text-[10px] uppercase tracking-widest text-gray-600 mb-4">Estado del encargo</p>
+                <div className="flex items-start">
+                  {ESTADOS.map((est, i) => {
+                    const currentIdx = ESTADOS.indexOf(result.estado);
+                    const done   = i <= currentIdx;
+                    const active = i === currentIdx;
+                    return (
+                      <React.Fragment key={est}>
+                        <div className="flex flex-col items-center flex-shrink-0" style={{minWidth:'52px'}}>
+                          <div style={{
+                            width:'12px', height:'12px', borderRadius:'50%',
+                            background: active ? '#FF6600' : done ? 'rgba(255,102,0,0.4)' : 'transparent',
+                            border: `2px solid ${active ? '#FF6600' : done ? 'rgba(255,102,0,0.4)' : '#333'}`,
+                          }}/>
+                          <p className="font-mono text-center mt-1 leading-tight px-1"
+                             style={{fontSize:'8px', color: active ? '#FF6600' : done ? 'rgba(255,102,0,0.5)' : '#444', wordBreak:'break-word', maxWidth:'52px'}}>
+                            {est}
+                          </p>
+                        </div>
+                        {i < ESTADOS.length - 1 && (
+                          <div style={{height:'2px', flex:1, marginTop:'5px', background: i < currentIdx ? 'rgba(255,102,0,0.4)' : '#222'}}/>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {result.tracking && (
+                <div className="p-3 mb-4" style={{border:'1px solid rgba(255,102,0,0.3)', background:'rgba(255,102,0,0.05)'}}>
+                  <p className="font-mono text-[10px] text-orange uppercase tracking-widest mb-1">📍 Tracking</p>
+                  <p className="font-mono text-sm text-white">{result.tracking}</p>
+                </div>
+              )}
+
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-gray-600 mb-3">Productos ({result.cantidad})</p>
+                {result.productos.map((p, i) => (
+                  <div key={i} className="flex items-center gap-3 py-2 border-b border-border last:border-0">
+                    <div style={{width:'6px', height:'6px', background:'rgba(255,102,0,0.4)', flexShrink:0}}/>
+                    <p className="font-mono text-xs text-gray-300">
+                      <span className="text-orange">{p.brand}</span> {p.model} — {p.color} · T.{p.size}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-border flex justify-between items-baseline">
+                <span className="font-mono text-xs text-gray-600 uppercase tracking-widest">Total</span>
+                <span className="font-condensed font-black italic text-2xl">{ars(result.total_ars)} <span className="text-sm text-gray-500 font-mono not-italic font-normal">ARS</span></span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ── FAQ ── */
+function FAQ() {
+  const [open, setOpen] = React.useState(null);
+  const items = [
+    { q:'¿Cómo funciona el sistema de encargo?',
+      a:'Elegís el modelo y el colorway, completás el pedido y pagás por Mercado Pago. Una vez confirmado el pago, hacemos el encargo de importación especialmente para vos y te avisamos por WhatsApp cuando esté en camino.' },
+    { q:'¿Cuánto tarda en llegar?',
+      a:'El tiempo estimado es de 15 a 20 días hábiles desde la confirmación del pago. Es un encargo de importación, no stock disponible, por eso el tiempo es mayor al de una compra normal.' },
+    { q:'¿Puedo elegir cualquier talle?',
+      a:'Sí, los talles disponibles por modelo están indicados en el catálogo (van del 37 al 45 según el modelo). Si tenés dudas sobre tu talle escribinos por WhatsApp antes de hacer el pedido.' },
+    { q:'¿Cómo pago?',
+      a:'El pago se realiza 100% online a través de Mercado Pago: podés usar tarjeta de débito, crédito o dinero en cuenta. El pago se procesa al momento de confirmar el encargo.' },
+    { q:'¿Puedo cancelar o devolver el pedido?',
+      a:'Al ser productos importados por encargo específicamente para cada cliente, no aceptamos cancelaciones una vez confirmado el pago. Si el producto llega con algún defecto, coordinamos la solución por WhatsApp.' },
+    { q:'¿Enviás a todo el país?',
+      a:'Sí, enviamos a todo el territorio argentino. El costo de envío se coordina al confirmar el pedido según tu provincia y se abona por separado.' },
+    { q:'¿No encontrás el modelo que buscás?',
+      a:'Escribinos por WhatsApp o Instagram. Conseguimos prácticamente cualquier modelo retro runner importado — si no está en el catálogo, podemos conseguirlo por encargo especial.' },
+  ];
+
+  return (
+    <section id="faq" className="py-20 border-t border-border">
+      <div className="max-w-7xl mx-auto px-6">
+        <p className="font-mono text-orange text-xs tracking-[.45em] uppercase mb-3">// Preguntas frecuentes</p>
+        <h2 className="section-title text-5xl md:text-7xl border-l-8 border-orange pl-6 leading-none mb-12">FAQ_</h2>
+        <div className="max-w-3xl">
+          {items.map((item, i) => (
+            <div key={i} className="border-b border-border">
+              <button
+                onClick={() => setOpen(open === i ? null : i)}
+                className="w-full text-left py-5 flex items-center justify-between gap-4"
+              >
+                <span className="font-condensed font-black italic text-xl uppercase"
+                      style={{color: open === i ? '#FF6600' : 'white'}}>
+                  {item.q}
+                </span>
+                <span className="font-condensed font-black text-2xl flex-shrink-0"
+                      style={{color: open === i ? '#FF6600' : '#444', display:'inline-block', transition:'transform .2s', transform: open === i ? 'rotate(45deg)' : 'none'}}>
+                  +
+                </span>
+              </button>
+              {open === i && (
+                <div className="pb-5 pr-2 md:pr-8">
+                  <p className="font-mono text-gray-400 text-sm leading-loose">{item.a}</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ── WISHLIST PANEL ── */
+function WishlistPanel({ wishlist, isOpen, onClose, onOpenModel }) {
+  const favModels = MODELS.filter(m => wishlist.includes(m.id));
+  return (
+    <>
+      <div className={`overlay fixed inset-0 bg-bg/80 backdrop-blur-sm z-[90] ${isOpen ? 'show' : ''}`} onClick={onClose}/>
+      <div className={`cart-sidebar fixed top-0 right-0 h-full w-full max-w-md bg-bg border-l border-border z-[100] flex flex-col ${isOpen ? 'open' : ''}`}>
+        <div className="flex items-center justify-between p-6 border-b border-border flex-shrink-0">
+          <div>
+            <h3 className="font-condensed font-black italic text-2xl uppercase">Favoritos</h3>
+            <p className="font-mono text-[10px] text-gray-600 uppercase tracking-widest">Modelos guardados</p>
+          </div>
+          <button onClick={onClose} className="text-gray-500 hover:text-orange transition-colors p-1">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div className="flex-grow overflow-y-auto p-6">
+          {favModels.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="font-condensed font-black italic text-5xl text-gray-700 mb-3">VACÍO</p>
+              <p className="font-mono text-xs text-gray-600 uppercase tracking-widest mb-6">Tocá el ♥ en cualquier modelo para guardarlo</p>
+              <button onClick={onClose} className="btn-secondary px-8 py-3 text-sm">Ver Catálogo</button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {favModels.map(model => {
+                const firstCw = model.coverCw
+                  ? (model.colorways.find(cw => cw.id === model.coverCw) || model.colorways[0])
+                  : model.colorways[0];
+                return (
+                  <div key={model.id}
+                       onClick={() => { onOpenModel(model); onClose(); }}
+                       className="flex gap-4 border border-border p-3 bg-card cursor-pointer hover:border-orange/50 transition-colors">
+                    <img src={firstCw.folder + firstCw.images[0]} alt={model.model}
+                         className="w-20 h-20 border border-border flex-shrink-0"
+                         style={{objectFit:'contain', background:'#120b05', padding:'8px'}}
+                         onError={e => { e.target.src='https://via.placeholder.com/80x80/120b05/FF6600?text=GG'; }}/>
+                    <div className="flex flex-col justify-center min-w-0">
+                      <p className="font-mono text-[10px] text-orange uppercase tracking-widest">{model.brand}</p>
+                      <p className="font-condensed font-black text-xl uppercase leading-tight">{model.model}</p>
+                      <p className="font-mono text-gray-500 text-xs mt-0.5">{model.colorways.length} colorways · desde {ars(model.price)}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
 /* ── FOOTER ── */
 function Footer() {
   return (
@@ -1097,7 +1421,7 @@ function Footer() {
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[.3em] text-gray-600 mb-4">Navegación</p>
             <div className="flex flex-col gap-3">
-              {[['#inicio','Inicio'],['#modelos','Modelos'],['#catalogo','Catálogo'],['#como-funciona','Cómo Funciona']].map(([h,l]) => (
+              {[['#inicio','Inicio'],['#modelos','Modelos'],['#catalogo','Catálogo'],['#como-funciona','Cómo Funciona'],['#seguimiento','Seguí tu pedido'],['#faq','FAQ']].map(([h,l]) => (
                 <a key={h} href={h} className="font-mono text-xs text-gray-500 hover:text-orange transition-colors uppercase tracking-widest" style={{textDecoration:'none'}}>{l}</a>
               ))}
             </div>
@@ -1120,10 +1444,10 @@ function Footer() {
   );
 }
 
-/* ── APP ── */
+/* ── PAGO RESULTADO BANNER ── */
 function PagoResultadoBanner() {
-  const [msg, setMsg] = useState(null);
-  useEffect(() => {
+  const [msg, setMsg] = React.useState(null);
+  React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const pago   = params.get('pago');
     const ref    = params.get('ref');
@@ -1135,7 +1459,6 @@ function PagoResultadoBanner() {
       setMsg({ tipo: 'err', texto: 'El pago no se pudo completar. Podés intentar de nuevo o coordinarlo por WhatsApp.' });
     }
     if (pago) {
-      // Limpiar la URL sin recargar
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
@@ -1160,6 +1483,23 @@ function App() {
   const [cartOpen,     setCartOpen]     = useState(false);
   const [toast,        setToast]        = useState(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [activeModel,  setActiveModel]  = useState(null);
+
+  const [wishlist, setWishlist] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('ggsnk-wishlist') || '[]'); }
+    catch { return []; }
+  });
+  const [wishlistOpen, setWishlistOpen] = useState(false);
+  useEffect(() => {
+    localStorage.setItem('ggsnk-wishlist', JSON.stringify(wishlist));
+  }, [wishlist]);
+
+  const handleToggleFav = useCallback((modelId) => {
+    setWishlist(prev =>
+      prev.includes(modelId) ? prev.filter(id => id !== modelId) : [...prev, modelId]
+    );
+  }, []);
+
   const cartCount = cart.reduce((acc, i) => acc + i.qty, 0);
 
   const handleAdd = useCallback((product, size) => {
@@ -1184,12 +1524,25 @@ function App() {
     <>
       <PagoResultadoBanner/>
       {toast && <Toast message={toast} onDone={() => setToast(null)}/>}
-      <Navbar cartCount={cartCount} onCartOpen={() => setCartOpen(true)}/>
+      <Navbar
+        cartCount={cartCount}
+        onCartOpen={() => setCartOpen(true)}
+        favCount={wishlist.length}
+        onWishlistOpen={() => setWishlistOpen(true)}
+      />
       <Ticker/>
       <Hero/>
       <LifestyleSection/>
-      <Catalog onAdd={handleAdd}/>
+      <Catalog
+        onAdd={handleAdd}
+        wishlist={wishlist}
+        onToggleFav={handleToggleFav}
+        activeModel={activeModel}
+        setActiveModel={setActiveModel}
+      />
       <ComoFunciona/>
+      <SeguimientoPedido/>
+      <FAQ/>
       <Footer/>
       <CartSidebar
         cart={cart} isOpen={cartOpen}
@@ -1197,6 +1550,12 @@ function App() {
         onRemove={handleRemove}
         onQtyChange={handleQtyChange}
         onCheckout={() => { setCartOpen(false); setCheckoutOpen(true); }}
+      />
+      <WishlistPanel
+        wishlist={wishlist}
+        isOpen={wishlistOpen}
+        onClose={() => setWishlistOpen(false)}
+        onOpenModel={(model) => { setActiveModel(model); }}
       />
       {checkoutOpen && (
         <CheckoutModal
