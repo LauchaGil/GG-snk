@@ -177,7 +177,7 @@ async function cargarStats() {
     ${statCard('📦', s.encargado, 'Encargados', 'text-blue-400')}
     ${statCard('🚚', s.camino, 'En camino', 'text-orange-400')}
     ${statCard('🏠', s.entregado, 'Entregados', 'text-gray-400')}
-    ${statCard('💵', '$' + s.ingresos.toFixed(0), 'USD cobrados', 'text-orange')}
+    ${statCard('💵', '$' + Number(s.ingresos).toLocaleString('es-AR'), 'ARS cobrados', 'text-orange')}
   `;
 }
 
@@ -247,7 +247,7 @@ function renderTabla() {
           <p class="font-mono text-[10px] text-gray-600">${p.email}</p>
         </td>
         <td class="px-4 py-3 font-mono text-xs text-gray-400 max-w-xs truncate">${prods}</td>
-        <td class="px-4 py-3 font-condensed font-black italic text-lg text-orange">$${p.total_usd} USD</td>
+        <td class="px-4 py-3 font-condensed font-black italic text-lg text-orange">$${Number(p.total_usd).toLocaleString('es-AR')} ARS</td>
         <td class="px-4 py-3">
           <span class="font-mono text-[10px] uppercase tracking-widest px-2 py-1 border ${colorCls}">${p.estado}</span>
           ${p.tracking ? `<p class="font-mono text-[9px] text-gray-600 mt-1">📍 ${p.tracking}</p>` : ''}
@@ -286,10 +286,10 @@ function abrirModal(id) {
       ${p.productos.map(i => `
         <div class="flex justify-between font-mono text-xs py-2 border-b border-border last:border-0">
           <span class="text-gray-300">${i.brand} ${i.model} — ${i.color} — T.${i.size}</span>
-          <span class="text-orange font-bold">$${i.price} USD</span>
+          <span class="text-orange font-bold">$${Number(i.price).toLocaleString('es-AR')} ARS</span>
         </div>`).join('')}
       <div class="flex justify-between font-condensed font-black italic text-xl mt-3">
-        <span>TOTAL</span><span class="text-orange">$${p.total_usd} USD</span>
+        <span>TOTAL</span><span class="text-orange">$${Number(p.total_usd).toLocaleString('es-AR')} ARS</span>
       </div>
     </div>
 
@@ -313,6 +313,7 @@ function abrirModal(id) {
         </div>
         <button onclick="guardarCambios(${p.id})" class="btn btn-primary w-full py-3 text-lg">Guardar Cambios</button>
         <p id="modalMsg" class="font-mono text-xs text-center hidden"></p>
+        <button onclick="eliminarPedido(${p.id})" class="btn w-full py-2 text-sm mt-1" style="border-color:#ef4444;color:#ef4444;" onmouseover="this.style.background='#ef4444';this.style.color='#080502'" onmouseout="this.style.background='transparent';this.style.color='#ef4444'">Eliminar pedido</button>
       </div>
     </div>
   `;
@@ -321,6 +322,23 @@ function abrirModal(id) {
 
 function cerrarModal() {
   document.getElementById('modalDetalle').classList.add('hidden');
+}
+
+async function eliminarPedido(id) {
+  if (!confirm(`¿Seguro que querés eliminar el pedido #${id}? Esta acción no se puede deshacer.`)) return;
+  try {
+    const res  = await fetch(`${API}/api/pedido/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.ok) {
+      cerrarModal();
+      await cargarDatos();
+    } else {
+      alert('Error al eliminar: ' + (data.error || 'Respuesta inesperada del servidor.'));
+    }
+  } catch (err) {
+    alert('No se pudo conectar con el servidor. Verificá que el backend esté activo.');
+    console.error(err);
+  }
 }
 
 async function guardarCambios(id) {

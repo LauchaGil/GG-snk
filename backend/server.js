@@ -48,7 +48,7 @@ pool.query(`
 });
 
 // ── Middlewares ──────────────────────────────────────────────
-app.use(cors({ origin: '*' }));
+app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'] }));
 app.use(express.json());
 
 // ── Resend (email API) ───────────────────────────────────────
@@ -327,6 +327,21 @@ app.put('/api/pedido/:id', async (req, res) => {
   } catch (err) {
     console.error('Error al actualizar pedido:', err.message);
     res.status(500).json({ ok: false, error: 'No se pudo actualizar el pedido.' });
+  }
+});
+
+// ── DELETE /api/pedido/:id — eliminar pedido ────────────────
+app.delete('/api/pedido/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const check = await pool.query('SELECT id FROM pedidos WHERE id = $1', [id]);
+    if (check.rows.length === 0)
+      return res.status(404).json({ ok: false, error: 'Pedido no encontrado.' });
+    await pool.query('DELETE FROM pedidos WHERE id = $1', [id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Error al eliminar pedido:', err.message);
+    res.status(500).json({ ok: false, error: 'No se pudo eliminar el pedido.' });
   }
 });
 
