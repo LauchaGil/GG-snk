@@ -447,6 +447,16 @@ app.get('/api/status', (req, res) => {
   res.json({ ok: true, mensaje: "GG'SNK backend corriendo 🟢" });
 });
 
+// ── Migración temporal — BORRAR DESPUÉS DE USAR ──────────────
+app.get('/api/migrate-total-ars', async (req, res) => {
+  try {
+    await pool.query('ALTER TABLE pedidos RENAME COLUMN total_usd TO total_ars');
+    res.json({ ok: true, mensaje: 'Columna renombrada correctamente ✅' });
+  } catch (err) {
+    res.json({ ok: false, error: err.message });
+  }
+});
+
 // ── Iniciar servidor ─────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`\n🟠 GG'SNK backend corriendo en http://localhost:${PORT}`);
