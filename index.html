@@ -554,7 +554,7 @@ function ModelCard({ model, onClick, hasFav }) {
 }
 
 /* ── MODEL MODAL (nueva versión con gallery + colorways) ── */
-function ModelModal({ model, onClose, onAdd, initialColorId, wishlist, onToggleFav }) {
+function ModelModal({ model, onClose, onAdd, onCartOpen, initialColorId, wishlist, onToggleFav }) {
   const sortedCws  = sortColorways(model.colorways);
   const initCw     = initialColorId
     ? (sortedCws.find(cw => cw.id === initialColorId) || sortedCws[0])
@@ -784,6 +784,13 @@ function ModelModal({ model, onClose, onAdd, initialColorId, wishlist, onToggleF
                 </svg>
               </button>
             </div>
+            {added && (
+              <button
+                onClick={() => { onClose(); onCartOpen(); }}
+                className="w-full py-3 text-base font-condensed font-black uppercase italic border-2 border-[#FF6600] text-[#FF6600] hover:bg-[#FF6600] hover:text-white transition-all flex items-center justify-center gap-2">
+                🛒 IR AL CARRITO
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -792,7 +799,7 @@ function ModelModal({ model, onClose, onAdd, initialColorId, wishlist, onToggleF
 }
 
 /* ── CATALOG (nuevo con tabs por marca) ── */
-function Catalog({ onAdd, wishlist, onToggleFav, activeModel, setActiveModel }) {
+function Catalog({ onAdd, onCartOpen, wishlist, onToggleFav, activeModel, setActiveModel }) {
   const BRANDS = ['NIKE', 'NEW BALANCE', 'ASICS', 'ADIDAS'];
   const [activeBrand,    setActiveBrand]    = useState('NIKE');
   const [initialColorId, setInitialColorId] = useState(null);
@@ -884,6 +891,7 @@ function Catalog({ onAdd, wishlist, onToggleFav, activeModel, setActiveModel }) 
           model={activeModel}
           onClose={() => { setActiveModel(null); setInitialColorId(null); }}
           onAdd={(product, size) => { onAdd(product, size); }}
+          onCartOpen={onCartOpen}
           initialColorId={initialColorId}
           wishlist={wishlist}
           onToggleFav={onToggleFav}
@@ -1572,6 +1580,7 @@ function App() {
       <LifestyleSection/>
       <Catalog
         onAdd={handleAdd}
+        onCartOpen={() => setCartOpen(true)}
         wishlist={wishlist}
         onToggleFav={handleToggleFav}
         activeModel={activeModel}
