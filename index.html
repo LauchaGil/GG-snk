@@ -564,6 +564,7 @@ function ModelModal({ model, onClose, onAdd, onCartOpen, initialColorId, wishlis
   const [selSize,   setSelSize]   = useState(null);
   const [sizeErr,   setSizeErr]   = useState(false);
   const [added,     setAdded]     = useState(false);
+  const [showCart,  setShowCart]  = useState(false);
   const [copied,    setCopied]    = useState(false);
 
   const isFav = wishlist.some(w => w.modelId === model.id && w.colorId === activeCw.id);
@@ -609,6 +610,7 @@ function ModelModal({ model, onClose, onAdd, onCartOpen, initialColorId, wishlis
       img:   activeCw.folder + activeCw.images[0],
     }, selSize);
     setAdded(true);
+    setShowCart(true);
     setTimeout(() => { setAdded(false); setSelSize(null); }, 1600);
   };
 
@@ -784,7 +786,7 @@ function ModelModal({ model, onClose, onAdd, onCartOpen, initialColorId, wishlis
                 </svg>
               </button>
             </div>
-            {added && (
+            {showCart && (
               <button
                 onClick={() => { onClose(); onCartOpen(); }}
                 className="w-full py-3 text-base font-condensed font-black uppercase italic border-2 border-[#FF6600] text-[#FF6600] hover:bg-[#FF6600] hover:text-white transition-all flex items-center justify-center gap-2">
