@@ -587,6 +587,7 @@ function ModelModal({ model, onClose, onAdd, onCartOpen, initialColorId, wishlis
     setSelSize(null);
     setSizeErr(false);
     setAdded(false);
+    setShowCart(false);
     window.history.replaceState({}, '', `?modelo=${model.id}&color=${cw.id}`);
   };
 
@@ -1033,13 +1034,6 @@ function CheckoutModal({ cart, onClose }) {
     return '';
   };
 
-  useEffect(() => {
-    // Si hay link de MP, redirigir automáticamente después de 2 segundos
-    if (step === 3 && initPoint) {
-      const t = setTimeout(() => { window.location.href = initPoint; }, 2000);
-      return () => clearTimeout(t);
-    }
-  }, [step, initPoint]);
 
   const fields = [
     { key:'name',     label:'Nombre completo',    type:'text' },
@@ -1081,9 +1075,9 @@ function CheckoutModal({ cart, onClose }) {
     } catch (err) {
       clearTimeout(timeout);
       if (err.name === 'AbortError') {
-        setErrMsg('El servidor tardó demasiado en responder. Verificá que el backend esté corriendo en Render.');
+        setErrMsg('El servidor tardó demasiado en responder. Intentá de nuevo en unos minutos o contactanos por WhatsApp.');
       } else {
-        setErrMsg('No se pudo conectar con el servidor. Asegurate de que el backend esté corriendo.');
+        setErrMsg('No se pudo procesar el pedido. Intentá de nuevo o contactanos directamente por WhatsApp.');
       }
       setStep(4);
     }
@@ -1158,7 +1152,7 @@ function CheckoutModal({ cart, onClose }) {
             {initPoint ? (
               <>
                 <p className="font-mono text-gray-400 text-sm leading-loose mb-4">
-                  ¡Gracias, {form.name}! Serás redirigido a Mercado Pago para completar el pago en segundos...
+                  ¡Gracias, {form.name}! Hacé click abajo para completar el pago en Mercado Pago.
                 </p>
                 <p className="font-mono text-xs text-gray-500 mb-6">
                   Ref: <span className="text-orange font-bold">{ars(total)}</span> · <span className="text-white">{form.email}</span>
@@ -1524,7 +1518,10 @@ function PagoResultadoBanner() {
 }
 
 function App() {
-  const [cart,         setCart]         = useState([]);
+  const [cart,         setCart]         = useState(() => {
+    try { return JSON.parse(localStorage.getItem('ggsnk-cart-v1') || '[]'); }
+    catch { return []; }
+  });
   const [cartOpen,     setCartOpen]     = useState(false);
   const [toast,        setToast]        = useState(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -1538,6 +1535,9 @@ function App() {
   useEffect(() => {
     localStorage.setItem('ggsnk-wishlist-v2', JSON.stringify(wishlist));
   }, [wishlist]);
+  useEffect(() => {
+    localStorage.setItem('ggsnk-cart-v1', JSON.stringify(cart));
+  }, [cart]);
 
   const handleToggleFav = useCallback((modelId, colorId) => {
     setWishlist(prev => {
