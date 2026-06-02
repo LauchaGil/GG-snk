@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,170 +8,258 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,900;1,600;1,700;1,900&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,900;1,600;1,700;1,900&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap"
+    rel="stylesheet">
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          colors: { bg:'#080502', orange:'#FF6600', card:'#120b05', border:'#2a1a08' },
-          fontFamily: { mono:['DM Mono','monospace'], condensed:['Barlow Condensed','sans-serif'] }
+          colors: { bg: '#080502', orange: '#FF6600', card: '#120b05', border: '#2a1a08' },
+          fontFamily: { mono: ['DM Mono', 'monospace'], condensed: ['Barlow Condensed', 'sans-serif'] }
         }
       }
     }
   </script>
   <style>
-    * { box-sizing: border-box }
-    body { background: #080502; color: white; font-family: 'DM Mono', monospace; }
-    ::-webkit-scrollbar { width: 4px }
-    ::-webkit-scrollbar-track { background: #080502 }
-    ::-webkit-scrollbar-thumb { background: #FF6600; border-radius: 2px }
-    .btn { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-style: italic;
-           text-transform: uppercase; letter-spacing: .06em; cursor: pointer; transition: all .2s;
-           border: 2px solid; display: inline-flex; align-items: center; justify-content: center; }
-    .btn-primary { background: #FF6600; color: #080502; border-color: #FF6600; }
-    .btn-primary:hover { background: white; border-color: white; }
-    .btn-secondary { background: transparent; color: #FF6600; border-color: #FF6600; }
-    .btn-secondary:hover { background: #FF6600; color: #080502; }
-    input, select, textarea { background: #120b05; border: 1px solid #2a1a08; color: white;
-      font-family: 'DM Mono', monospace; outline: none; transition: border-color .2s; font-size: 13px; }
-    input:focus, select:focus, textarea:focus { border-color: #FF6600 }
-    select option { background: #120b05 }
-    @keyframes fadeIn { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:translateY(0) } }
-    .fade-in { animation: fadeIn .3s ease both }
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      background: #080502;
+      color: white;
+      font-family: 'DM Mono', monospace;
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #080502
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #FF6600;
+      border-radius: 2px
+    }
+
+    .btn {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-style: italic;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      cursor: pointer;
+      transition: all .2s;
+      border: 2px solid;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-primary {
+      background: #FF6600;
+      color: #080502;
+      border-color: #FF6600;
+    }
+
+    .btn-primary:hover {
+      background: white;
+      border-color: white;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: #FF6600;
+      border-color: #FF6600;
+    }
+
+    .btn-secondary:hover {
+      background: #FF6600;
+      color: #080502;
+    }
+
+    input,
+    select,
+    textarea {
+      background: #120b05;
+      border: 1px solid #2a1a08;
+      color: white;
+      font-family: 'DM Mono', monospace;
+      outline: none;
+      transition: border-color .2s;
+      font-size: 13px;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: #FF6600
+    }
+
+    select option {
+      background: #120b05
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .fade-in {
+      animation: fadeIn .3s ease both
+    }
   </style>
 </head>
+
 <body>
 
-<!-- ── LOGIN ── -->
-<div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-sm border border-border bg-card p-8">
-    <p class="font-condensed font-black italic text-orange text-4xl mb-1">GG'SNK</p>
-    <p class="font-mono text-gray-600 text-xs uppercase tracking-widest mb-8">Panel de Control</p>
-    <form id="loginForm" class="space-y-4">
-      <input id="passInput" type="password" placeholder="Contraseña" class="w-full px-4 py-3"/>
-      <p id="loginError" class="text-red-400 font-mono text-xs hidden">Contraseña incorrecta.</p>
-      <button type="submit" class="btn btn-primary w-full py-3 text-lg">Entrar</button>
-    </form>
-  </div>
-</div>
-
-<!-- ── PANEL ── -->
-<div id="panelScreen" class="hidden min-h-screen">
-
-  <!-- Navbar -->
-  <nav class="sticky top-0 z-50 bg-bg/95 backdrop-blur-md border-b border-border px-6 py-4 flex items-center justify-between">
-    <div class="flex items-center gap-4">
-      <span class="font-condensed font-black italic text-orange text-3xl">GG'SNK</span>
-      <span class="font-mono text-gray-600 text-[10px] uppercase tracking-widest">Panel de Control</span>
-    </div>
-    <div class="flex items-center gap-4">
-      <a href="index.html" class="btn btn-secondary px-4 py-2 text-sm">← Ver Tienda</a>
-      <button onclick="logout()" class="font-mono text-xs text-gray-500 hover:text-orange transition-colors uppercase tracking-widest">Salir</button>
-    </div>
-  </nav>
-
-  <div class="max-w-7xl mx-auto px-6 py-8">
-
-    <!-- Stats -->
-    <div id="statsGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 mb-8"></div>
-
-    <!-- Filtros -->
-    <div class="flex flex-wrap items-center gap-3 mb-6">
-      <p class="font-mono text-[10px] uppercase tracking-widest text-gray-600">Filtrar:</p>
-      <div id="filtros" class="flex flex-wrap gap-2"></div>
-      <div class="ml-auto">
-        <input id="buscador" type="text" placeholder="Buscar por nombre o email..."
-               class="px-4 py-2 w-64" oninput="renderTabla()"/>
-      </div>
-    </div>
-
-    <!-- Tabla -->
-    <div class="border border-border overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead>
-            <tr class="border-b border-border bg-card">
-              <th class="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-gray-600">#</th>
-              <th class="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-gray-600">Fecha</th>
-              <th class="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-gray-600">Cliente</th>
-              <th class="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-gray-600">Productos</th>
-              <th class="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-gray-600">Total</th>
-              <th class="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-gray-600">Estado</th>
-              <th class="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-gray-600">Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="tablaPedidos"></tbody>
-        </table>
-      </div>
-      <div id="sinPedidos" class="hidden py-16 text-center">
-        <p class="font-condensed font-black italic text-4xl text-gray-700 mb-2">SIN PEDIDOS</p>
-        <p class="font-mono text-xs text-gray-600 uppercase tracking-widest">No hay pedidos para este filtro</p>
-      </div>
+  <!-- ── LOGIN ── -->
+  <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-sm border border-border bg-card p-8">
+      <p class="font-condensed font-black italic text-orange text-4xl mb-1">GG'SNK</p>
+      <p class="font-mono text-gray-600 text-xs uppercase tracking-widest mb-8">Panel de Control</p>
+      <form id="loginForm" class="space-y-4">
+        <input id="passInput" type="password" placeholder="Contraseña" class="w-full px-4 py-3" />
+        <p id="loginError" class="text-red-400 font-mono text-xs hidden">Contraseña incorrecta.</p>
+        <button type="submit" class="btn btn-primary w-full py-3 text-lg">Entrar</button>
+      </form>
     </div>
   </div>
-</div>
 
-<!-- ── MODAL DETALLE ── -->
-<div id="modalDetalle" class="hidden fixed inset-0 z-[200] flex items-center justify-center p-4">
-  <div class="absolute inset-0 bg-bg/90 backdrop-blur-md" onclick="cerrarModal()"></div>
-  <div class="relative bg-card border border-border w-full max-w-2xl max-h-[90vh] overflow-y-auto fade-in">
-    <div class="flex items-center justify-between p-6 border-b border-border">
-      <h3 id="modalTitulo" class="font-condensed font-black italic text-2xl uppercase text-orange"></h3>
-      <button onclick="cerrarModal()" class="text-gray-500 hover:text-orange transition-colors">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-      </button>
+  <!-- ── PANEL ── -->
+  <div id="panelScreen" class="hidden min-h-screen">
+
+    <!-- Navbar -->
+    <nav
+      class="sticky top-0 z-50 bg-bg/95 backdrop-blur-md border-b border-border px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <span class="font-condensed font-black italic text-orange text-3xl">GG'SNK</span>
+        <span class="font-mono text-gray-600 text-[10px] uppercase tracking-widest">Panel de Control</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <a href="index.html" class="btn btn-secondary px-4 py-2 text-sm">← Ver Tienda</a>
+        <button onclick="logout()"
+          class="font-mono text-xs text-gray-500 hover:text-orange transition-colors uppercase tracking-widest">Salir</button>
+      </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+
+      <!-- Stats -->
+      <div id="statsGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 mb-8"></div>
+
+      <!-- Filtros -->
+      <div class="flex flex-wrap items-center gap-3 mb-6">
+        <p class="font-mono text-[10px] uppercase tracking-widest text-gray-600">Filtrar:</p>
+        <div id="filtros" class="flex flex-wrap gap-2"></div>
+        <div class="ml-auto">
+          <input id="buscador" type="text" placeholder="Buscar por nombre o email..." class="px-4 py-2 w-64"
+            oninput="renderTabla()" />
+        </div>
+      </div>
+
+      <!-- Tabla -->
+      <div class="border border-border overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-border bg-card">
+                <th class="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-gray-600">#</th>
+                <th class="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-gray-600">Fecha</th>
+                <th class="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-gray-600">Cliente
+                </th>
+                <th class="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-gray-600">Productos
+                </th>
+                <th class="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-gray-600">Total</th>
+                <th class="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-gray-600">Estado
+                </th>
+                <th class="text-left px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-gray-600">Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody id="tablaPedidos"></tbody>
+          </table>
+        </div>
+        <div id="sinPedidos" class="hidden py-16 text-center">
+          <p class="font-condensed font-black italic text-4xl text-gray-700 mb-2">SIN PEDIDOS</p>
+          <p class="font-mono text-xs text-gray-600 uppercase tracking-widest">No hay pedidos para este filtro</p>
+        </div>
+      </div>
     </div>
-    <div id="modalContenido" class="p-6 space-y-6"></div>
   </div>
-</div>
 
-<script>
-const API   = 'https://ggsnk-backend.onrender.com';
-const PASS  = 'ggsnk2025';  // <-- Cambiá esto por tu contraseña
+  <!-- ── MODAL DETALLE ── -->
+  <div id="modalDetalle" class="hidden fixed inset-0 z-[200] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-bg/90 backdrop-blur-md" onclick="cerrarModal()"></div>
+    <div class="relative bg-card border border-border w-full max-w-2xl max-h-[90vh] overflow-y-auto fade-in">
+      <div class="flex items-center justify-between p-6 border-b border-border">
+        <h3 id="modalTitulo" class="font-condensed font-black italic text-2xl uppercase text-orange"></h3>
+        <button onclick="cerrarModal()" class="text-gray-500 hover:text-orange transition-colors">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+      <div id="modalContenido" class="p-6 space-y-6"></div>
+    </div>
+  </div>
 
-const ESTADOS = ['Pendiente de pago', 'Pagado', 'Encargo realizado', 'En camino', 'Entregado'];
-const ESTADO_COLORS = {
-  'Pendiente de pago': 'text-yellow-400 border-yellow-400/40 bg-yellow-400/10',
-  'Pagado':            'text-green-400 border-green-400/40 bg-green-400/10',
-  'Encargo realizado': 'text-blue-400 border-blue-400/40 bg-blue-400/10',
-  'En camino':         'text-orange-400 border-orange-400/40 bg-orange-400/10',
-  'Entregado':         'text-gray-400 border-gray-400/40 bg-gray-400/10',
-};
+  <script>
+    const API = 'https://ggsnk-backend.onrender.com';
+    const PASS = 'LosTilos03';  // <-- Cambiá esto por tu contraseña
 
-let pedidos = [];
-let filtroActivo = 'TODOS';
+    const ESTADOS = ['Pendiente de pago', 'Pagado', 'Encargo realizado', 'En camino', 'Entregado'];
+    const ESTADO_COLORS = {
+      'Pendiente de pago': 'text-yellow-400 border-yellow-400/40 bg-yellow-400/10',
+      'Pagado': 'text-green-400 border-green-400/40 bg-green-400/10',
+      'Encargo realizado': 'text-blue-400 border-blue-400/40 bg-blue-400/10',
+      'En camino': 'text-orange-400 border-orange-400/40 bg-orange-400/10',
+      'Entregado': 'text-gray-400 border-gray-400/40 bg-gray-400/10',
+    };
 
-// ── LOGIN ──────────────────────────────────────────────────
-document.getElementById('loginForm').addEventListener('submit', e => {
-  e.preventDefault();
-  const val = document.getElementById('passInput').value;
-  if (val === PASS) {
-    document.getElementById('loginScreen').classList.add('hidden');
-    document.getElementById('panelScreen').classList.remove('hidden');
-    cargarDatos();
-  } else {
-    document.getElementById('loginError').classList.remove('hidden');
-  }
-});
+    let pedidos = [];
+    let filtroActivo = 'TODOS';
 
-function logout() {
-  document.getElementById('panelScreen').classList.add('hidden');
-  document.getElementById('loginScreen').classList.remove('hidden');
-  document.getElementById('passInput').value = '';
-}
+    // ── LOGIN ──────────────────────────────────────────────────
+    document.getElementById('loginForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const val = document.getElementById('passInput').value;
+      if (val === PASS) {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('panelScreen').classList.remove('hidden');
+        cargarDatos();
+      } else {
+        document.getElementById('loginError').classList.remove('hidden');
+      }
+    });
 
-// ── DATOS ──────────────────────────────────────────────────
-async function cargarDatos() {
-  await Promise.all([cargarStats(), cargarPedidos()]);
-}
+    function logout() {
+      document.getElementById('panelScreen').classList.add('hidden');
+      document.getElementById('loginScreen').classList.remove('hidden');
+      document.getElementById('passInput').value = '';
+    }
 
-async function cargarStats() {
-  const res  = await fetch(`${API}/api/stats`);
-  const data = await res.json();
-  const s    = data.stats;
-  document.getElementById('statsGrid').innerHTML = `
+    // ── DATOS ──────────────────────────────────────────────────
+    async function cargarDatos() {
+      await Promise.all([cargarStats(), cargarPedidos()]);
+    }
+
+    async function cargarStats() {
+      const res = await fetch(`${API}/api/stats`);
+      const data = await res.json();
+      const s = data.stats;
+      document.getElementById('statsGrid').innerHTML = `
     ${statCard('TOTAL', s.total, 'Pedidos')}
     ${statCard('💳', s.pendiente, 'Pendiente pago', 'text-yellow-400')}
     ${statCard('✅', s.pagado, 'Pagados', 'text-green-400')}
@@ -179,66 +268,66 @@ async function cargarStats() {
     ${statCard('🏠', s.entregado, 'Entregados', 'text-gray-400')}
     ${statCard('💵', '$' + Number(s.ingresos).toLocaleString('es-AR'), 'ARS cobrados', 'text-orange')}
   `;
-}
+    }
 
-function statCard(icon, value, label, colorClass = 'text-orange') {
-  return `
+    function statCard(icon, value, label, colorClass = 'text-orange') {
+      return `
     <div class="border border-border bg-card p-4 text-center">
       <p class="font-mono text-lg mb-1">${icon}</p>
       <p class="font-condensed font-black italic text-3xl ${colorClass}">${value}</p>
       <p class="font-mono text-[9px] uppercase tracking-widest text-gray-600 mt-1">${label}</p>
     </div>`;
-}
+    }
 
-async function cargarPedidos() {
-  const res  = await fetch(`${API}/api/pedidos`);
-  const data = await res.json();
-  pedidos    = data.pedidos;
-  renderFiltros();
-  renderTabla();
-}
+    async function cargarPedidos() {
+      const res = await fetch(`${API}/api/pedidos`);
+      const data = await res.json();
+      pedidos = data.pedidos;
+      renderFiltros();
+      renderTabla();
+    }
 
-// ── FILTROS ────────────────────────────────────────────────
-function renderFiltros() {
-  const filtros = ['TODOS', ...ESTADOS];
-  document.getElementById('filtros').innerHTML = filtros.map(f => `
+    // ── FILTROS ────────────────────────────────────────────────
+    function renderFiltros() {
+      const filtros = ['TODOS', ...ESTADOS];
+      document.getElementById('filtros').innerHTML = filtros.map(f => `
     <button onclick="setFiltro('${f}')"
       class="font-mono text-xs uppercase tracking-widest px-3 py-1 border transition-all
              ${filtroActivo === f ? 'bg-orange text-bg border-orange font-bold' : 'border-border text-gray-500 hover:border-orange/50 hover:text-white'}">
       ${f}
     </button>`).join('');
-}
+    }
 
-function setFiltro(f) {
-  filtroActivo = f;
-  renderFiltros();
-  renderTabla();
-}
+    function setFiltro(f) {
+      filtroActivo = f;
+      renderFiltros();
+      renderTabla();
+    }
 
-// ── TABLA ──────────────────────────────────────────────────
-function renderTabla() {
-  const busqueda = document.getElementById('buscador').value.toLowerCase();
-  let lista = pedidos;
-  if (filtroActivo !== 'TODOS') lista = lista.filter(p => p.estado === filtroActivo);
-  if (busqueda) lista = lista.filter(p =>
-    p.nombre.toLowerCase().includes(busqueda) || p.email.toLowerCase().includes(busqueda)
-  );
+    // ── TABLA ──────────────────────────────────────────────────
+    function renderTabla() {
+      const busqueda = document.getElementById('buscador').value.toLowerCase();
+      let lista = pedidos;
+      if (filtroActivo !== 'TODOS') lista = lista.filter(p => p.estado === filtroActivo);
+      if (busqueda) lista = lista.filter(p =>
+        p.nombre.toLowerCase().includes(busqueda) || p.email.toLowerCase().includes(busqueda)
+      );
 
-  const tbody = document.getElementById('tablaPedidos');
-  const empty = document.getElementById('sinPedidos');
+      const tbody = document.getElementById('tablaPedidos');
+      const empty = document.getElementById('sinPedidos');
 
-  if (lista.length === 0) {
-    tbody.innerHTML = '';
-    empty.classList.remove('hidden');
-    return;
-  }
-  empty.classList.add('hidden');
+      if (lista.length === 0) {
+        tbody.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
 
-  tbody.innerHTML = lista.map(p => {
-    const fecha    = new Date(p.fecha).toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit', year:'2-digit' });
-    const prods    = p.productos.map(i => `${i.brand} ${i.model} T.${i.size}`).join(', ');
-    const colorCls = ESTADO_COLORS[p.estado] || 'text-gray-400 border-gray-400/40 bg-gray-400/10';
-    return `
+      tbody.innerHTML = lista.map(p => {
+        const fecha = new Date(p.fecha).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+        const prods = p.productos.map(i => `${i.brand} ${i.model} T.${i.size}`).join(', ');
+        const colorCls = ESTADO_COLORS[p.estado] || 'text-gray-400 border-gray-400/40 bg-gray-400/10';
+        return `
       <tr class="border-b border-border hover:bg-card/60 transition-colors">
         <td class="px-4 py-3 font-mono text-xs text-orange font-bold">#${p.id}</td>
         <td class="px-4 py-3 font-mono text-xs text-gray-500">${fecha}</td>
@@ -256,17 +345,17 @@ function renderTabla() {
           <button onclick="abrirModal(${p.id})" class="btn btn-secondary px-3 py-1 text-xs">Ver / Editar</button>
         </td>
       </tr>`;
-  }).join('');
-}
+      }).join('');
+    }
 
-// ── MODAL ──────────────────────────────────────────────────
-function abrirModal(id) {
-  const p = pedidos.find(x => x.id === id);
-  if (!p) return;
-  const fecha = new Date(p.fecha).toLocaleString('es-AR');
+    // ── MODAL ──────────────────────────────────────────────────
+    function abrirModal(id) {
+      const p = pedidos.find(x => x.id === id);
+      if (!p) return;
+      const fecha = new Date(p.fecha).toLocaleString('es-AR');
 
-  document.getElementById('modalTitulo').textContent = `Pedido #${p.id}`;
-  document.getElementById('modalContenido').innerHTML = `
+      document.getElementById('modalTitulo').textContent = `Pedido #${p.id}`;
+      document.getElementById('modalContenido').innerHTML = `
     <!-- Info cliente -->
     <div class="border border-border p-4 bg-bg">
       <p class="font-mono text-[10px] uppercase tracking-widest text-orange mb-3">Cliente</p>
@@ -317,55 +406,56 @@ function abrirModal(id) {
       </div>
     </div>
   `;
-  document.getElementById('modalDetalle').classList.remove('hidden');
-}
-
-function cerrarModal() {
-  document.getElementById('modalDetalle').classList.add('hidden');
-}
-
-async function eliminarPedido(id) {
-  if (!confirm(`¿Seguro que querés eliminar el pedido #${id}? Esta acción no se puede deshacer.`)) return;
-  try {
-    const res  = await fetch(`${API}/api/pedido/${id}`, { method: 'DELETE' });
-    const data = await res.json();
-    if (data.ok) {
-      cerrarModal();
-      await cargarDatos();
-    } else {
-      alert('Error al eliminar: ' + (data.error || 'Respuesta inesperada del servidor.'));
+      document.getElementById('modalDetalle').classList.remove('hidden');
     }
-  } catch (err) {
-    alert('No se pudo conectar con el servidor. Verificá que el backend esté activo.');
-    console.error(err);
-  }
-}
 
-async function guardarCambios(id) {
-  const estado   = document.getElementById('modalEstado').value;
-  const tracking = document.getElementById('modalTracking').value;
-  const notas    = document.getElementById('modalNotas').value;
-  const msg      = document.getElementById('modalMsg');
+    function cerrarModal() {
+      document.getElementById('modalDetalle').classList.add('hidden');
+    }
 
-  const res  = await fetch(`${API}/api/pedido/${id}`, {
-    method:  'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ estado, tracking, notas }),
-  });
-  const data = await res.json();
+    async function eliminarPedido(id) {
+      if (!confirm(`¿Seguro que querés eliminar el pedido #${id}? Esta acción no se puede deshacer.`)) return;
+      try {
+        const res = await fetch(`${API}/api/pedido/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.ok) {
+          cerrarModal();
+          await cargarDatos();
+        } else {
+          alert('Error al eliminar: ' + (data.error || 'Respuesta inesperada del servidor.'));
+        }
+      } catch (err) {
+        alert('No se pudo conectar con el servidor. Verificá que el backend esté activo.');
+        console.error(err);
+      }
+    }
 
-  if (data.ok) {
-    msg.textContent = '✅ Cambios guardados';
-    msg.className   = 'font-mono text-xs text-center text-green-400';
-    msg.classList.remove('hidden');
-    await cargarDatos();
-    setTimeout(() => msg.classList.add('hidden'), 2000);
-  } else {
-    msg.textContent = '❌ Error al guardar';
-    msg.className   = 'font-mono text-xs text-center text-red-400';
-    msg.classList.remove('hidden');
-  }
-}
-</script>
+    async function guardarCambios(id) {
+      const estado = document.getElementById('modalEstado').value;
+      const tracking = document.getElementById('modalTracking').value;
+      const notas = document.getElementById('modalNotas').value;
+      const msg = document.getElementById('modalMsg');
+
+      const res = await fetch(`${API}/api/pedido/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado, tracking, notas }),
+      });
+      const data = await res.json();
+
+      if (data.ok) {
+        msg.textContent = '✅ Cambios guardados';
+        msg.className = 'font-mono text-xs text-center text-green-400';
+        msg.classList.remove('hidden');
+        await cargarDatos();
+        setTimeout(() => msg.classList.add('hidden'), 2000);
+      } else {
+        msg.textContent = '❌ Error al guardar';
+        msg.className = 'font-mono text-xs text-center text-red-400';
+        msg.classList.remove('hidden');
+      }
+    }
+  </script>
 </body>
+
 </html>
