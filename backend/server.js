@@ -39,9 +39,17 @@ pool.query(`
     total_ars   REAL    NOT NULL,
     estado      TEXT    NOT NULL DEFAULT 'Pendiente de pago',
     tracking    TEXT,
-    notas       TEXT
+    notas       TEXT,
+    costo       REAL,
+    manual      BOOLEAN DEFAULT FALSE
   )
 `).then(() => {
+  // Por si la tabla ya existía sin estas columnas
+  return pool.query(`
+    ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS costo  REAL;
+    ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS manual BOOLEAN DEFAULT FALSE;
+  `);
+}).then(() => {
   console.log('✅ Tabla pedidos lista');
 }).catch(err => {
   console.error('Error al crear tabla:', err.message);
@@ -298,6 +306,45 @@ app.post('/api/pedido', async (req, res) => {
   }
 });
 
+// ── POST /api/pedido/manual — carga manual desde el panel ───
+app.post('/api/pedido/manual', async (req, res) => {
+  const { nombre, producto, costo, venta, estado, notas } = req.body;
+
+  if (!producto || venta == null || venta === '')
+    return res.status(400).json({ ok: false, error: 'Faltan el producto y/o el precio de venta.' });
+
+  const ventaNum = Number(venta);
+  const costoNum = (costo == null || costo === '') ? null : Number(costo);
+  if (Number.isNaN(ventaNum) || (costoNum !== null && Number.isNaN(costoNum)))
+    return res.status(400).json({ ok: false, error: 'Costo y venta deben ser números.' });
+
+  const items = [{ brand: 'Manual', model: producto, color: '—', size: '—', price: ventaNum }];
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO pedidos (fecha, nombre, email, telefono, provincia, direccion, productos, total_ars, costo, estado, notas, manual)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, TRUE) RETURNING id`,
+      [
+        new Date().toISOString(),
+        nombre || 'Venta manual',
+        '',
+        '',
+        '',
+        '',
+        JSON.stringify(items),
+        ventaNum,
+        costoNum,
+        estado || 'Entregado',
+        notas || '',
+      ]
+    );
+    res.json({ ok: true, pedidoId: result.rows[0].id });
+  } catch (err) {
+    console.error('Error al crear pedido manual:', err.message);
+    res.status(500).json({ ok: false, error: 'No se pudo crear el pedido manual.' });
+  }
+});
+
 // ── GET /api/pedidos — listar todos ─────────────────────────
 app.get('/api/pedidos', async (req, res) => {
   try {
@@ -318,21 +365,24 @@ app.get('/api/pedidos', async (req, res) => {
 
 // ── PUT /api/pedido/:id — actualizar estado y tracking ──────
 app.put('/api/pedido/:id', async (req, res) => {
-  const { id }                      = req.params;
-  const { estado, tracking, notas } = req.body;
+  const { id }                             = req.params;
+  const { estado, tracking, notas, costo } = req.body;
 
   try {
     const check = await pool.query('SELECT id FROM pedidos WHERE id = $1', [id]);
     if (check.rows.length === 0)
       return res.status(404).json({ ok: false, error: 'Pedido no encontrado.' });
 
+    const costoNum = (costo == null || costo === '') ? null : Number(costo);
+
     await pool.query(
       `UPDATE pedidos SET
         estado   = COALESCE($1, estado),
         tracking = COALESCE($2, tracking),
-        notas    = COALESCE($3, notas)
-       WHERE id = $4`,
-      [estado || null, tracking || null, notas || null, id]
+        notas    = COALESCE($3, notas),
+        costo    = COALESCE($4, costo)
+       WHERE id = $5`,
+      [estado || null, tracking || null, notas || null, costoNum, id]
     );
     res.json({ ok: true });
   } catch (err) {
