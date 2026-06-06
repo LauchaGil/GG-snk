@@ -352,6 +352,7 @@
     ${statCard('🚚', s.camino, 'En camino', 'text-orange-400')}
     ${statCard('🏠', s.entregado, 'Entregados', 'text-gray-400')}
     ${statCard('💵', '$' + Number(s.ingresos).toLocaleString('es-AR'), 'ARS cobrados', 'text-orange')}
+    ${statCard('📈', '$' + Number(s.ganancia ?? 0).toLocaleString('es-AR'), 'Ganancia neta', (s.ganancia ?? 0) >= 0 ? 'text-green-400' : 'text-red-400')}
   `;
     }
 

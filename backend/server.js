@@ -392,7 +392,7 @@ app.delete('/api/pedido/:id', authMiddleware, async (req, res) => {
 app.get('/api/stats', authMiddleware, async (req, res) => {
   try {
     const q = (sql, params = []) => pool.query(sql, params).then(r => r.rows[0]);
-    const [total, pendiente, pagado, encargado, camino, entregado, ingresos] = await Promise.all([
+    const [total, pendiente, pagado, encargado, camino, entregado, ingresos, ganancia] = await Promise.all([
       q('SELECT COUNT(*)::int AS n FROM pedidos'),
       q("SELECT COUNT(*)::int AS n FROM pedidos WHERE estado = 'Pendiente de pago'"),
       q("SELECT COUNT(*)::int AS n FROM pedidos WHERE estado = 'Pagado'"),
@@ -400,11 +400,13 @@ app.get('/api/stats', authMiddleware, async (req, res) => {
       q("SELECT COUNT(*)::int AS n FROM pedidos WHERE estado = 'En camino'"),
       q("SELECT COUNT(*)::int AS n FROM pedidos WHERE estado = 'Entregado'"),
       q("SELECT COALESCE(SUM(total_ars), 0) AS s FROM pedidos WHERE estado != 'Pendiente de pago'"),
+      q("SELECT COALESCE(SUM(total_ars - costo), 0) AS s FROM pedidos WHERE estado != 'Pendiente de pago' AND costo IS NOT NULL"),
     ]);
     res.json({ ok: true, stats: {
       total: total.n, pendiente: pendiente.n, pagado: pagado.n,
       encargado: encargado.n, camino: camino.n, entregado: entregado.n,
       ingresos: parseFloat(ingresos.s),
+      ganancia: parseFloat(ganancia.s),
     }});
   } catch (err) {
     console.error('Error al obtener stats:', err.message);
