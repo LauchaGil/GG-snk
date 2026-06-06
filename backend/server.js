@@ -5,9 +5,14 @@ const cors       = require('cors');
 const { Pool }   = require('pg');
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 const crypto     = require('crypto');
+const rateLimit  = require('express-rate-limit');
 
 // ── Auth ─────────────────────────────────────────────────────
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'LosTilos03';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+if (!ADMIN_PASSWORD) {
+  console.error('❌ ADMIN_PASSWORD no está definido en las variables de entorno.');
+  process.exit(1);
+}
 const TOKEN_SECRET   = crypto.randomBytes(32).toString('hex');
 
 function generarToken() {
@@ -222,8 +227,17 @@ function formatearMensajeWhatsApp(items, cliente) {
   );
 }
 
+// ── Rate limiting ────────────────────────────────────────────
+const loginLimiter = rateLimit({
+  windowMs : 15 * 60 * 1000, // 15 minutos
+  max      : 10,              // máx 10 intentos por IP
+  message  : { ok: false, error: 'Demasiados intentos. Esperá 15 minutos.' },
+  standardHeaders: true,
+  legacyHeaders  : false,
+});
+
 // ── POST /api/admin/login ────────────────────────────────────
-app.post('/api/admin/login', (req, res) => {
+app.post('/api/admin/login', loginLimiter, (req, res) => {
   const { password } = req.body;
   if (password === ADMIN_PASSWORD) {
     res.json({ ok: true, token: generarToken() });
