@@ -244,8 +244,20 @@
           <div id="mItemsList" class="space-y-2"></div>
         </div>
 
+        <!-- Costo de envío -->
+        <div>
+          <label class="font-mono text-[10px] uppercase tracking-widest text-gray-600 block mb-1">Costo de envío ARS (compartido)</label>
+          <input id="mEnvio" type="number" min="0" step="any" placeholder="0" class="w-full px-3 py-2" oninput="recalcResumen()" />
+        </div>
+
         <!-- Resumen -->
         <div id="mResumen" class="hidden border border-border bg-bg p-3 space-y-1">
+          <div class="flex justify-between font-mono text-xs text-gray-500">
+            <span>COSTO PARES</span><span id="mResumenCostoPares">$0 ARS</span>
+          </div>
+          <div class="flex justify-between font-mono text-xs text-gray-500">
+            <span>ENVÍO</span><span id="mResumenEnvio">$0 ARS</span>
+          </div>
           <div class="flex justify-between font-mono text-xs text-gray-500">
             <span>COSTO TOTAL</span><span id="mResumenCosto">$0 ARS</span>
           </div>
@@ -551,6 +563,7 @@
         `<option value="${e}" ${e === 'Entregado' ? 'selected' : ''}>${e}</option>`).join('');
       document.getElementById('formManual').reset();
       document.getElementById('mItemsList').innerHTML = '';
+      document.getElementById('mEnvio').value = '';
       document.getElementById('mResumen').classList.add('hidden');
       document.getElementById('mMsg').classList.add('hidden');
       agregarItemManual();
@@ -593,11 +606,15 @@
     function recalcResumen() {
       const costos = [...document.querySelectorAll('.m-costo')].map(i => parseFloat(i.value) || 0);
       const ventas = [...document.querySelectorAll('.m-venta')].map(i => parseFloat(i.value) || 0);
-      const totalCosto = costos.reduce((s, v) => s + v, 0);
+      const envio = parseFloat(document.getElementById('mEnvio').value) || 0;
+      const costoPares = costos.reduce((s, v) => s + v, 0);
+      const totalCosto = costoPares + envio;
       const totalVenta = ventas.reduce((s, v) => s + v, 0);
       const ganancia = totalVenta - totalCosto;
       const resumen = document.getElementById('mResumen');
       if (totalVenta > 0 || totalCosto > 0) {
+        document.getElementById('mResumenCostoPares').textContent = `$${costoPares.toLocaleString('es-AR')} ARS`;
+        document.getElementById('mResumenEnvio').textContent = `$${envio.toLocaleString('es-AR')} ARS`;
         document.getElementById('mResumenCosto').textContent = `$${totalCosto.toLocaleString('es-AR')} ARS`;
         document.getElementById('mResumenVenta').textContent = `$${totalVenta.toLocaleString('es-AR')} ARS`;
         const gEl = document.getElementById('mResumenGanancia');
@@ -622,6 +639,7 @@
       const body = {
         nombre: document.getElementById('mNombre').value.trim(),
         items,
+        envio:  document.getElementById('mEnvio').value,
         estado: document.getElementById('mEstado').value,
         notas:  document.getElementById('mNotas').value.trim(),
       };

@@ -299,7 +299,7 @@ app.post('/api/pedido', async (req, res) => {
 
 // ── POST /api/pedido/manual ──────────────────────────────────
 app.post('/api/pedido/manual', authMiddleware, async (req, res) => {
-  const { nombre, items: itemsRaw, estado, notas } = req.body;
+  const { nombre, items: itemsRaw, envio, estado, notas } = req.body;
 
   if (!itemsRaw || itemsRaw.length === 0)
     return res.status(400).json({ ok: false, error: 'Agregá al menos un producto.' });
@@ -313,10 +313,11 @@ app.post('/api/pedido/manual', authMiddleware, async (req, res) => {
     brand: 'Manual', model: it.producto, color: '—', size: '—', price: Number(it.venta),
   }));
   const totalArs = items.reduce((s, i) => s + i.price, 0);
+  const envioNum = (envio == null || envio === '') ? 0 : Number(envio);
   const totalCosto = itemsRaw.reduce((s, it) => {
     const c = (it.costo == null || it.costo === '') ? 0 : Number(it.costo);
     return s + c;
-  }, 0);
+  }, 0) + envioNum;
   const costoFinal = totalCosto > 0 ? totalCosto : null;
 
   try {
