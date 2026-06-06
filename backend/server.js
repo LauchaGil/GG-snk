@@ -13,7 +13,7 @@ if (!ADMIN_PASSWORD) {
   console.error('❌ ADMIN_PASSWORD no está definido en las variables de entorno.');
   process.exit(1);
 }
-const TOKEN_SECRET   = crypto.randomBytes(32).toString('hex');
+const TOKEN_SECRET = process.env.TOKEN_SECRET || crypto.randomBytes(32).toString('hex');
 
 function generarToken() {
   return crypto.createHmac('sha256', TOKEN_SECRET).update(ADMIN_PASSWORD).digest('hex');
