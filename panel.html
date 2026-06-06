@@ -267,7 +267,6 @@
 
   <script>
     const API = 'https://ggsnk-backend.onrender.com';
-    const PASS = 'LosTilos03';  // <-- Cambiá esto por tu contraseña
 
     const ESTADOS = ['Pendiente de pago', 'Pagado', 'Encargo realizado', 'En camino', 'Entregado'];
     const ESTADO_COLORS = {
@@ -280,21 +279,39 @@
 
     let pedidos = [];
     let filtroActivo = 'TODOS';
+    let authToken = null;
+
+    function authHeaders() {
+      return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` };
+    }
 
     // ── LOGIN ──────────────────────────────────────────────────
-    document.getElementById('loginForm').addEventListener('submit', e => {
+    document.getElementById('loginForm').addEventListener('submit', async e => {
       e.preventDefault();
-      const val = document.getElementById('passInput').value;
-      if (val === PASS) {
-        document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('panelScreen').classList.remove('hidden');
-        cargarDatos();
-      } else {
+      const password = document.getElementById('passInput').value;
+      try {
+        const res = await fetch(`${API}/api/admin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          authToken = data.token;
+          document.getElementById('loginScreen').classList.add('hidden');
+          document.getElementById('panelScreen').classList.remove('hidden');
+          cargarDatos();
+        } else {
+          document.getElementById('loginError').classList.remove('hidden');
+        }
+      } catch {
+        document.getElementById('loginError').textContent = 'No se pudo conectar con el servidor.';
         document.getElementById('loginError').classList.remove('hidden');
       }
     });
 
     function logout() {
+      authToken = null;
       document.getElementById('panelScreen').classList.add('hidden');
       document.getElementById('loginScreen').classList.remove('hidden');
       document.getElementById('passInput').value = '';
@@ -306,7 +323,7 @@
     }
 
     async function cargarStats() {
-      const res = await fetch(`${API}/api/stats`);
+      const res = await fetch(`${API}/api/stats`, { headers: authHeaders() });
       const data = await res.json();
       const s = data.stats;
       document.getElementById('statsGrid').innerHTML = `
@@ -330,7 +347,7 @@
     }
 
     async function cargarPedidos() {
-      const res = await fetch(`${API}/api/pedidos`);
+      const res = await fetch(`${API}/api/pedidos`, { headers: authHeaders() });
       const data = await res.json();
       pedidos = data.pedidos;
       renderFiltros();
@@ -481,7 +498,7 @@
     async function eliminarPedido(id) {
       if (!confirm(`¿Seguro que querés eliminar el pedido #${id}? Esta acción no se puede deshacer.`)) return;
       try {
-        const res = await fetch(`${API}/api/pedido/${id}`, { method: 'DELETE' });
+        const res = await fetch(`${API}/api/pedido/${id}`, { method: 'DELETE', headers: authHeaders() });
         const data = await res.json();
         if (data.ok) {
           cerrarModal();
@@ -505,7 +522,7 @@
 
       const res = await fetch(`${API}/api/pedido/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify({ estado, tracking, notas, costo }),
       });
       const data = await res.json();
@@ -565,25 +582,4 @@
       try {
         const res = await fetch(`${API}/api/pedido/manual`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-        const data = await res.json();
-        if (data.ok) {
-          cerrarModalManual();
-          await cargarDatos();
-        } else {
-          msg.textContent = '❌ ' + (data.error || 'Error al guardar');
-          msg.className = 'font-mono text-xs text-center text-red-400';
-          msg.classList.remove('hidden');
-        }
-      } catch (err) {
-        msg.textContent = '❌ No se pudo conectar con el servidor';
-        msg.className = 'font-mono text-xs text-center text-red-400';
-        msg.classList.remove('hidden');
-      }
-    });
-  </script>
-</body>
-
-</html>
+          headers: auth

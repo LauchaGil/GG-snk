@@ -4,6 +4,22 @@ const { Resend } = require('resend');
 const cors       = require('cors');
 const { Pool }   = require('pg');
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
+const crypto     = require('crypto');
+
+// ── Auth ─────────────────────────────────────────────────────
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'LosTilos03';
+const TOKEN_SECRET   = crypto.randomBytes(32).toString('hex');
+
+function generarToken() {
+  return crypto.createHmac('sha256', TOKEN_SECRET).update(ADMIN_PASSWORD).digest('hex');
+}
+
+function authMiddleware(req, res, next) {
+  const auth = req.headers['authorization'] || '';
+  const token = auth.replace('Bearer ', '');
+  if (token === generarToken()) return next();
+  res.status(401).json({ ok: false, error: 'No autorizado.' });
+}
 
 // ── Mercado Pago ─────────────────────────────────────────────
 const mpClient = new MercadoPagoConfig({
@@ -59,6 +75,7 @@ pool.query(`
 const ALLOWED_ORIGINS = [
   'https://ggsnk.store',
   'https://www.ggsnk.store',
+  'https://gg-snk.vercel.app',
 ];
 app.use(cors({
   origin: (origin, callback) => {
@@ -216,6 +233,16 @@ function formatearMensajeWhatsApp(items, cliente) {
   );
 }
 
+// ── POST /api/admin/login ────────────────────────────────────
+app.post('/api/admin/login', (req, res) => {
+  const { password } = req.body;
+  if (password === ADMIN_PASSWORD) {
+    res.json({ ok: true, token: generarToken() });
+  } else {
+    res.status(401).json({ ok: false, error: 'Contraseña incorrecta.' });
+  }
+});
+
 // ── POST /api/pedido ─────────────────────────────────────────
 app.post('/api/pedido', async (req, res) => {
   const { items, cliente } = req.body;
@@ -307,7 +334,7 @@ app.post('/api/pedido', async (req, res) => {
 });
 
 // ── POST /api/pedido/manual — carga manual desde el panel ───
-app.post('/api/pedido/manual', async (req, res) => {
+app.post('/api/pedido/manual', authMiddleware, async (req, res) => {
   const { nombre, producto, costo, venta, estado, notas } = req.body;
 
   if (!producto || venta == null || venta === '')
@@ -346,7 +373,7 @@ app.post('/api/pedido/manual', async (req, res) => {
 });
 
 // ── GET /api/pedidos — listar todos ─────────────────────────
-app.get('/api/pedidos', async (req, res) => {
+app.get('/api/pedidos', authMiddleware, async (req, res) => {
   try {
     const { estado } = req.query;
     let result;
@@ -364,7 +391,7 @@ app.get('/api/pedidos', async (req, res) => {
 });
 
 // ── PUT /api/pedido/:id — actualizar estado y tracking ──────
-app.put('/api/pedido/:id', async (req, res) => {
+app.put('/api/pedido/:id', authMiddleware, async (req, res) => {
   const { id }                             = req.params;
   const { estado, tracking, notas, costo } = req.body;
 
@@ -392,7 +419,7 @@ app.put('/api/pedido/:id', async (req, res) => {
 });
 
 // ── DELETE /api/pedido/:id — eliminar pedido ────────────────
-app.delete('/api/pedido/:id', async (req, res) => {
+app.delete('/api/pedido/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
   try {
     const check = await pool.query('SELECT id FROM pedidos WHERE id = $1', [id]);
@@ -407,7 +434,7 @@ app.delete('/api/pedido/:id', async (req, res) => {
 });
 
 // ── GET /api/stats — estadísticas para el panel ─────────────
-app.get('/api/stats', async (req, res) => {
+app.get('/api/stats', authMiddleware, async (req, res) => {
   try {
     const q = (sql, params = []) => pool.query(sql, params).then(r => r.rows[0]);
 
@@ -508,30 +535,4 @@ app.get('/api/seguimiento/:id', async (req, res) => {
       ok: true,
       pedido: {
         id        : p.id,
-        fecha     : p.fecha,
-        estado    : p.estado,
-        tracking  : p.tracking,
-        total_ars : p.total_ars,
-        cantidad  : productos.length,
-        productos : productos.map(i => ({ brand: i.brand, model: i.model, color: i.color, size: i.size })),
-      },
-    });
-  } catch (err) {
-    console.error('Error seguimiento:', err.message);
-    res.status(500).json({ ok: false, error: 'Error al buscar el pedido.' });
-  }
-});
-
-// ── Health check ─────────────────────────────────────────────
-app.get('/api/status', (req, res) => {
-  res.json({ ok: true, mensaje: "GG'SNK backend corriendo 🟢" });
-});
-
-// ── Iniciar servidor ─────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`\n🟠 GG'SNK backend corriendo en http://localhost:${PORT}`);
-  console.log(`   → POST http://localhost:${PORT}/api/pedido`);
-  console.log(`   → GET  http://localhost:${PORT}/api/pedidos`);
-  console.log(`   → GET  http://localhost:${PORT}/api/stats`);
-  console.log(`   → GET  http://localhost:${PORT}/api/status\n`);
-});
+        fecha 
