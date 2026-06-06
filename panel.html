@@ -231,26 +231,32 @@
       </div>
       <form id="formManual" class="p-6 space-y-4">
         <div>
-          <label class="font-mono text-[10px] uppercase tracking-widest text-gray-600 block mb-1">Producto *</label>
-          <input id="mProducto" type="text" placeholder="Ej: Nike Air Max Plus 3 TN T.42" class="w-full px-3 py-2" required />
-        </div>
-        <div>
           <label class="font-mono text-[10px] uppercase tracking-widest text-gray-600 block mb-1">Cliente (opcional)</label>
           <input id="mNombre" type="text" placeholder="Nombre del comprador" class="w-full px-3 py-2" />
         </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="font-mono text-[10px] uppercase tracking-widest text-gray-600 block mb-1">Costo total (traerla) ARS</label>
-            <input id="mCosto" type="number" min="0" step="any" placeholder="0" class="w-full px-3 py-2" oninput="calcGanancia()" />
+
+        <!-- Lista de productos -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="font-mono text-[10px] uppercase tracking-widest text-gray-600">Productos *</label>
+            <button type="button" onclick="agregarItemManual()" class="font-mono text-[10px] uppercase tracking-widest text-orange border border-orange/40 hover:bg-orange/10 px-2 py-1 transition-colors">+ Agregar</button>
           </div>
-          <div>
-            <label class="font-mono text-[10px] uppercase tracking-widest text-gray-600 block mb-1">Precio de venta ARS *</label>
-            <input id="mVenta" type="number" min="0" step="any" placeholder="0" class="w-full px-3 py-2" required oninput="calcGanancia()" />
+          <div id="mItemsList" class="space-y-2"></div>
+        </div>
+
+        <!-- Resumen -->
+        <div id="mResumen" class="hidden border border-border bg-bg p-3 space-y-1">
+          <div class="flex justify-between font-mono text-xs text-gray-500">
+            <span>COSTO TOTAL</span><span id="mResumenCosto">$0 ARS</span>
+          </div>
+          <div class="flex justify-between font-mono text-xs text-gray-500">
+            <span>VENTA TOTAL</span><span id="mResumenVenta">$0 ARS</span>
+          </div>
+          <div class="flex justify-between font-condensed font-black italic text-xl border-t border-border pt-1 mt-1">
+            <span>GANANCIA</span><span id="mResumenGanancia" class="text-green-400">$0 ARS</span>
           </div>
         </div>
-        <div id="mGanancia" class="hidden border border-border bg-bg p-3 flex justify-between items-center font-condensed font-black italic text-xl">
-          <span>GANANCIA</span><span id="mGananciaVal" class="text-green-400">$0 ARS</span>
-        </div>
+
         <div>
           <label class="font-mono text-[10px] uppercase tracking-widest text-gray-600 block mb-1">Estado</label>
           <select id="mEstado" class="w-full px-3 py-2"></select>
@@ -544,8 +550,10 @@
       document.getElementById('mEstado').innerHTML = ESTADOS.map(e =>
         `<option value="${e}" ${e === 'Entregado' ? 'selected' : ''}>${e}</option>`).join('');
       document.getElementById('formManual').reset();
-      document.getElementById('mGanancia').classList.add('hidden');
+      document.getElementById('mItemsList').innerHTML = '';
+      document.getElementById('mResumen').classList.add('hidden');
       document.getElementById('mMsg').classList.add('hidden');
+      agregarItemManual();
       document.getElementById('modalManual').classList.remove('hidden');
     }
 
@@ -553,33 +561,92 @@
       document.getElementById('modalManual').classList.add('hidden');
     }
 
-    function calcGanancia() {
-      const costo = parseFloat(document.getElementById('mCosto').value);
-      const venta = parseFloat(document.getElementById('mVenta').value);
-      const box = document.getElementById('mGanancia');
-      if (!isNaN(costo) && !isNaN(venta)) {
-        const g = venta - costo;
-        const val = document.getElementById('mGananciaVal');
-        val.textContent = `$${Number(g).toLocaleString('es-AR')} ARS`;
-        val.className = g >= 0 ? 'text-green-400' : 'text-red-400';
-        box.classList.remove('hidden');
+    let itemCount = 0;
+    function agregarItemManual() {
+      const id = itemCount++;
+      const div = document.createElement('div');
+      div.id = `mItem_${id}`;
+      div.className = 'border border-border bg-bg p-3 space-y-2 relative';
+      div.innerHTML = `
+        <button type="button" onclick="eliminarItemManual(${id})" class="absolute top-2 right-2 text-gray-600 hover:text-red-400 font-mono text-xs">✕</button>
+        <input type="text" placeholder="Producto (ej: Nike P-6000 T.42)" class="w-full px-3 py-2 m-producto" required />
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="font-mono text-[9px] uppercase tracking-widest text-gray-600 block mb-1">Costo ARS</label>
+            <input type="number" min="0" step="any" placeholder="0" class="w-full px-3 py-2 m-costo" oninput="recalcResumen()" />
+          </div>
+          <div>
+            <label class="font-mono text-[9px] uppercase tracking-widest text-gray-600 block mb-1">Venta ARS *</label>
+            <input type="number" min="0" step="any" placeholder="0" class="w-full px-3 py-2 m-venta" required oninput="recalcResumen()" />
+          </div>
+        </div>`;
+      document.getElementById('mItemsList').appendChild(div);
+      recalcResumen();
+    }
+
+    function eliminarItemManual(id) {
+      const el = document.getElementById(`mItem_${id}`);
+      if (el) el.remove();
+      recalcResumen();
+    }
+
+    function recalcResumen() {
+      const costos = [...document.querySelectorAll('.m-costo')].map(i => parseFloat(i.value) || 0);
+      const ventas = [...document.querySelectorAll('.m-venta')].map(i => parseFloat(i.value) || 0);
+      const totalCosto = costos.reduce((s, v) => s + v, 0);
+      const totalVenta = ventas.reduce((s, v) => s + v, 0);
+      const ganancia = totalVenta - totalCosto;
+      const resumen = document.getElementById('mResumen');
+      if (totalVenta > 0 || totalCosto > 0) {
+        document.getElementById('mResumenCosto').textContent = `$${totalCosto.toLocaleString('es-AR')} ARS`;
+        document.getElementById('mResumenVenta').textContent = `$${totalVenta.toLocaleString('es-AR')} ARS`;
+        const gEl = document.getElementById('mResumenGanancia');
+        gEl.textContent = `$${ganancia.toLocaleString('es-AR')} ARS`;
+        gEl.className = ganancia >= 0 ? 'text-green-400' : 'text-red-400';
+        resumen.classList.remove('hidden');
       } else {
-        box.classList.add('hidden');
+        resumen.classList.add('hidden');
       }
     }
 
     document.getElementById('formManual').addEventListener('submit', async e => {
       e.preventDefault();
       const msg = document.getElementById('mMsg');
+      const productos = document.getElementById('mProducto') ? null : null; // legacy
+      const itemEls = document.getElementById('mItemsList').children;
+      const items = [...itemEls].map(el => ({
+        producto: el.querySelector('.m-producto').value.trim(),
+        costo:    el.querySelector('.m-costo').value,
+        venta:    el.querySelector('.m-venta').value,
+      }));
       const body = {
-        producto: document.getElementById('mProducto').value.trim(),
-        nombre:   document.getElementById('mNombre').value.trim(),
-        costo:    document.getElementById('mCosto').value,
-        venta:    document.getElementById('mVenta').value,
-        estado:   document.getElementById('mEstado').value,
-        notas:    document.getElementById('mNotas').value.trim(),
+        nombre: document.getElementById('mNombre').value.trim(),
+        items,
+        estado: document.getElementById('mEstado').value,
+        notas:  document.getElementById('mNotas').value.trim(),
       };
       try {
         const res = await fetch(`${API}/api/pedido/manual`, {
           method: 'POST',
-          headers: auth
+          headers: authHeaders(),
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          cerrarModalManual();
+          await cargarDatos();
+        } else {
+          msg.textContent = '❌ ' + (data.error || 'Error al guardar');
+          msg.className = 'font-mono text-xs text-center text-red-400';
+          msg.classList.remove('hidden');
+        }
+      } catch (err) {
+        msg.textContent = '❌ No se pudo conectar con el servidor';
+        msg.className = 'font-mono text-xs text-center text-red-400';
+        msg.classList.remove('hidden');
+      }
+    });
+  </script>
+</body>
+
+</html>

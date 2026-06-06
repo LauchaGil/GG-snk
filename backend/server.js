@@ -299,20 +299,32 @@ app.post('/api/pedido', async (req, res) => {
 
 // ── POST /api/pedido/manual ──────────────────────────────────
 app.post('/api/pedido/manual', authMiddleware, async (req, res) => {
-  const { nombre, producto, costo, venta, estado, notas } = req.body;
-  if (!producto || venta == null || venta === '')
-    return res.status(400).json({ ok: false, error: 'Faltan el producto y/o el precio de venta.' });
-  const ventaNum = Number(venta);
-  const costoNum = (costo == null || costo === '') ? null : Number(costo);
-  if (Number.isNaN(ventaNum) || (costoNum !== null && Number.isNaN(costoNum)))
-    return res.status(400).json({ ok: false, error: 'Costo y venta deben ser números.' });
-  const items = [{ brand: 'Manual', model: producto, color: '—', size: '—', price: ventaNum }];
+  const { nombre, items: itemsRaw, estado, notas } = req.body;
+
+  if (!itemsRaw || itemsRaw.length === 0)
+    return res.status(400).json({ ok: false, error: 'Agregá al menos un producto.' });
+
+  for (const it of itemsRaw) {
+    if (!it.producto || it.venta == null || it.venta === '')
+      return res.status(400).json({ ok: false, error: 'Cada producto necesita nombre y precio de venta.' });
+  }
+
+  const items    = itemsRaw.map(it => ({
+    brand: 'Manual', model: it.producto, color: '—', size: '—', price: Number(it.venta),
+  }));
+  const totalArs = items.reduce((s, i) => s + i.price, 0);
+  const totalCosto = itemsRaw.reduce((s, it) => {
+    const c = (it.costo == null || it.costo === '') ? 0 : Number(it.costo);
+    return s + c;
+  }, 0);
+  const costoFinal = totalCosto > 0 ? totalCosto : null;
+
   try {
     const result = await pool.query(
       `INSERT INTO pedidos (fecha, nombre, email, telefono, provincia, direccion, productos, total_ars, costo, estado, notas, manual)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, TRUE) RETURNING id`,
       [new Date().toISOString(), nombre || 'Venta manual', '', '', '', '',
-       JSON.stringify(items), ventaNum, costoNum, estado || 'Entregado', notas || '']
+       JSON.stringify(items), totalArs, costoFinal, estado || 'Entregado', notas || '']
     );
     res.json({ ok: true, pedidoId: result.rows[0].id });
   } catch (err) {
