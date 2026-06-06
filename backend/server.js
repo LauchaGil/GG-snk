@@ -589,3 +589,57 @@ app.listen(PORT, () => {
   console.log(`   → GET  http://localhost:${PORT}/api/stats`);
   console.log(`   → GET  http://localhost:${PORT}/api/status\n`);
 });
+    : p.fecha,
+        estado    : p.estado,
+        tracking  : p.tracking,
+        total_ars : p.total_ars,
+        cantidad  : productos.length,
+        productos : productos.map(i => ({ brand: i.brand, model: i.model, color: i.color, size: i.size })),
+      },
+    });
+  } catch (err) {
+    console.error('Error seguimiento:', err.message);
+    res.status(500).json({ ok: false, error: 'Error al buscar el pedido.' });
+  }
+});
+
+// ── Health check ─────────────────────────────────────────────
+app.get('/api/status', (req, res) => {
+  res.json({ ok: true, mensaje: "GG'SNK backend corriendo 🟢" });
+});
+
+// ── Iniciar servidor ─────────────────────────────────────────
+app.listen(PORT, () => {
+  console.log(`\n🟠 GG'SNK backend corriendo en http://localhost:${PORT}`);
+  console.log(`   → POST http://localhost:${PORT}/api/pedido`);
+  console.log(`   → GET  http://localhost:${PORT}/api/pedidos`);
+  console.log(`   → GET  http://localhost:${PORT}/api/stats`);
+  console.log(`   → GET  http://localhost:${PORT}/api/status\n`);
+});
+    : p.fecha,
+        estado    : p.estado,
+        tracking  : p.tracking,
+        total_ars : p.total_ars,
+        cantidad  : productos.length,
+        productos : productos.map(i => ({ brand: i.brand, model: i.model, color: i.color, size: i.size })),
+      },
+    });
+  } catch (err) {
+    console.error('Error seguimiento:', err.message);
+    res.status(500).json({ ok: false, error: 'Error al buscar el pedido.' });
+  }
+});
+
+// ── Health check ─────────────────────────────────────────────
+app.get('/api/status', (req, res) => {
+  res.json({ ok: true, mensaje: "GG'SNK backend corriendo 🟢" });
+});
+
+// ── Iniciar servidor ─────────────────────────────────────────
+app.listen(PORT, () => {
+  console.log(`\n🟠 GG'SNK backend corriendo en http://localhost:${PORT}`);
+  console.log(`   → POST http://localhost:${PORT}/api/pedido`);
+  console.log(`   → GET  http://localhost:${PORT}/api/pedidos`);
+  console.log(`   → GET  http://localhost:${PORT}/api/stats`);
+  console.log(`   → GET  http://localhost:${PORT}/api/status\n`);
+});
